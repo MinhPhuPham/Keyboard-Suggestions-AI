@@ -20,15 +20,21 @@ from utils.config_loader import get_model_config
 class ModelExporter:
     """Export PyTorch model to ONNX format for mobile deployment"""
     
-    def __init__(self, model: TinyLSTM, tokenizer_vocab_size: int):
+    def __init__(self, model: TinyLSTM, vocab_size: int):
         self.model = model
-        self.vocab_size = tokenizer_vocab_size
+        self.vocab_size = vocab_size
+        self.model.eval()
+        
+        # Create dummy input for export
+        self.dummy_input = torch.randint(
+            0, vocab_size,
+            (1, 50),  # batch_size=1, seq_length=50
+            dtype=torch.long
+        )
     
     def export_to_onnx(
         self,
         output_path: str,
-        batch_size: int = 1,
-        seq_length: int = 50,
         opset_version: int = 14
     ):
         """
@@ -40,39 +46,27 @@ class ModelExporter:
             seq_length: Sequence length
             opset_version: ONNX opset version
         """
+        # Initialize a dummy input for ONNX export
+    def export_to_torchscript(self, output_path: str):
+        """Export model to TorchScript format (more stable than ONNX)"""
         self.model.eval()
         
-        # Create dummy input
-        dummy_input = torch.randint(
-            0, self.vocab_size,
-            (batch_size, seq_length),
-            dtype=torch.long
-        )
+        print(f"Exporting model to TorchScript...")
+        print(f"  Input shape: {self.dummy_input.shape}")
         
-        # Export to ONNX
-        print(f"Exporting model to ONNX...")
-        print(f"  Input shape: {dummy_input.shape}")
-        print(f"  Opset version: {opset_version}")
+        # Trace the model
+        traced_model = torch.jit.trace(self.model, self.dummy_input)
         
-        torch.onnx.export(
-            self.model,
-            dummy_input,
-            output_path,
-            export_params=True,
-            opset_version=opset_version,
-            do_constant_folding=True,
-            input_names=['input'],
-            output_names=['output'],
-            dynamic_axes={
-                'input': {0: 'batch_size', 1: 'seq_length'},
-                'output': {0: 'batch_size', 1: 'seq_length'}
-            }
-        )
+        # Save traced model
+        traced_model.save(output_path)
         
         print(f"✓ Model exported to: {output_path}")
         
-        # Verify ONNX model
-        self._verify_onnx_model(output_path)
+        # Get file size
+        size_mb = Path(output_path).stat().st_size / (1024 ** 2)
+        print(f"  Size: {size_mb:.2f} MB")
+        
+        return output_path
     
     def _verify_onnx_model(self, onnx_path: str):
         """Verify exported ONNX model"""
@@ -192,33 +186,36 @@ def export_model_for_mobile(
     # Create exporter
     exporter = ModelExporter(model, model_config['vocab_size'])
     
-    # Export to ONNX
-    onnx_path = output_path / "tiny_lstm.onnx"
-    exporter.export_to_onnx(str(onnx_path))
-    
-    # Quantize model
-    quantized_path = output_path / "tiny_lstm_int8.onnx"
-    exporter.quantize_onnx(str(onnx_path), str(quantized_path), "int8")
+    # Export to TorchScript (more stable than ONNX for LSTM)
+    torchscript_path = output_path / "tiny_lstm.pt"
+    exporter.export_to_torchscript(str(torchscript_path))
     
     # Test inference
-    test_input = np.random.randint(
+    test_input = torch.randint(
         0, model_config['vocab_size'],
         (1, 10),
-        dtype=np.int64
+        dtype=torch.long
     )
     
-    print("\nTesting original ONNX model:")
-    exporter.test_onnx_inference(str(onnx_path), test_input)
+    print(f"\nTesting TorchScript model:")
+    traced_model = torch.jit.load(str(torchscript_path))
+    traced_model.eval()
     
-    print("\nTesting quantized ONNX model:")
-    exporter.test_onnx_inference(str(quantized_path), test_input)
+    with torch.no_grad():
+        output = traced_model(test_input)
+    
+    print(f"✓ Inference successful")
+    print(f"  Input shape: {test_input.shape}")
+    print(f"  Output shape: {output[0].shape if isinstance(output, tuple) else output.shape}")
     
     print("\n" + "=" * 80)
     print("Export Summary:")
     print("=" * 80)
-    print(f"Original ONNX: {onnx_path}")
-    print(f"Quantized ONNX: {quantized_path}")
-    print("\nThese models can be integrated into iOS/Android apps")
+    print(f"TorchScript model: {torchscript_path}")
+    print(f"\nThis model can be converted to:")
+    print(f"  - iOS: Core ML (use coremltools)")
+    print(f"  - Android: TFLite (use onnx-tf)")
+    print(f"\nSee scripts/export_coreml.py and scripts/export_tflite.py")
 
 
 if __name__ == "__main__":

@@ -28,7 +28,12 @@ jupyter>=1.0.0
 matplotlib>=3.7.0
 seaborn>=0.12.0
 
-# Mobile deployment
-coremltools>=7.0  # For iOS Core ML export
-onnx-tf>=1.10.0   # For Android TFLite export
-tensorflow>=2.14.0  # For TFLite conversion
+# Mobile deployment (OPTIONAL - install separately when needed)
+# Note: These require Python 3.9-3.12, not compatible with Python 3.13
+# coremltools>=7.0  # For iOS Core ML export
+# onnx-tf>=1.10.0   # For Android TFLite export  
+# tensorflow>=2.14.0  # For TFLite conversion
+#
+# To use mobile export on Python 3.13:
+# Option 1: Use TorchScript export (already working)
+# Option 2: Use Python 3.11 virtual environment for mobile export only

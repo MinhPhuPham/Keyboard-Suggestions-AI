@@ -1,11 +1,10 @@
 # Model Configuration
 model:
-  name: "TinyLSTM"
   embedding_dim: 64
   hidden_dim: 128
   num_layers: 1
   dropout: 0.2
-  vocab_size: 25000
+  vocab_size: 100  # Must match tokenizer vocab size
 
 # Tokenizer Configuration
 tokenizer:

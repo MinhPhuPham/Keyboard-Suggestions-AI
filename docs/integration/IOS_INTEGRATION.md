@@ -1,313 +1,327 @@
-# iOS Integration Guide
+# iOS Integration Guide - PyTorch Mobile
 
-Complete guide for integrating KeyboardAI into your iOS keyboard extension.
-
----
-
-## Package Contents
-
-After running `./scripts/build_ios_package.sh`, you'll have:
-
-```
-ios/KeyboardAI/
-├── KeyboardAI.mlpackage      # Core ML model
-├── tokenizer.model            # SentencePiece tokenizer
-├── tokenizer.vocab            # Vocabulary file
-├── language_rules.yaml        # Language rules
-├── custom_dictionary.json     # Custom dictionary
-├── model_info.json           # Model metadata
-└── README.md                 # Package info
-```
+Complete step-by-step guide for integrating the KeyboardAI TorchScript model into your iOS keyboard extension.
 
 ---
 
-## Requirements
+## Prerequisites
 
-- **iOS**: 15.0+
+- **iOS**: 12.0+
 - **Xcode**: 13.0+
-- **Swift**: 5.5+
-- **Dependencies**:
-  - Core ML framework (built-in)
-  - SentencePiece Swift wrapper (see below)
+- **Swift**: 5.0+
+- **CocoaPods**: Installed (`sudo gem install cocoapods`)
 
 ---
 
-## Step 1: Add Files to Xcode Project
+## Step 1: Setup Xcode Project
 
-### 1.1 Add Core ML Model
+### 1.1 Create Keyboard Extension
 
-1. Drag `KeyboardAI.mlpackage` into your Xcode project
-2. Check "Copy items if needed"
-3. Add to keyboard extension target
-4. Xcode will auto-generate Swift interface
+1. Open your iOS app project in Xcode
+2. **File → New → Target**
+3. Select **Custom Keyboard Extension**
+4. Name it (e.g., "SmartKeyboard")
+5. Click **Finish**
 
-### 1.2 Add Resource Files
+### 1.2 Add Model Files
 
-1. Create `Resources` folder in keyboard extension
-2. Add these files:
+1. Extract `KeyboardAI-iOS-Package.zip`
+2. Drag all files into your keyboard extension target:
+   - `tiny_lstm.pt`
    - `tokenizer.model`
    - `tokenizer.vocab`
    - `language_rules.yaml`
    - `custom_dictionary.json`
-3. Ensure they're added to keyboard extension target
+3. **Important**: Check "Copy items if needed" and add to keyboard extension target
 
 ---
 
-## Step 2: Install SentencePiece
+## Step 2: Install PyTorch Mobile via CocoaPods
 
-### Option A: Swift Package Manager (Recommended)
+### 2.1 Create/Update Podfile
 
-Add to `Package.swift`:
+In your project root, create or update `Podfile`:
 
-```swift
-dependencies: [
-    .package(
-        url: "https://github.com/google/sentencepiece-swift",
-        from: "0.1.0"
-    )
-]
+```ruby
+platform :ios, '12.0'
+
+target 'SmartKeyboard' do
+  use_frameworks!
+  
+  # PyTorch Mobile (Lite Interpreter)
+  pod 'LibTorch-Lite', '~> 1.13.0'
+end
+
+# Post-install script to fix build issues
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'arm64'
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '12.0'
+    end
+  end
+end
 ```
 
-### Option B: Manual Integration
+### 2.2 Install Dependencies
 
-1. Download SentencePiece C++ library
-2. Build for iOS (arm64)
-3. Create Swift wrapper (see example below)
+```bash
+cd /path/to/your/project
+pod install
+```
+
+**Important**: From now on, open `YourProject.xcworkspace` (not `.xcodeproj`)
 
 ---
 
-## Step 3: Create Swift Wrapper Classes
+## Step 3: Create Objective-C++ Bridge
 
-### 3.1 Tokenizer Wrapper
+PyTorch is written in C++, so we need an Objective-C++ wrapper to use it from Swift.
+
+### 3.1 Create TorchBridge.h
+
+**File → New → File → Header File**
+
+Name: `TorchBridge.h`
+
+```objc
+#import <Foundation/Foundation.h>
+
+NS_ASSUME_NONNULL_BEGIN
+
+@interface TorchBridge : NSObject
+
+- (nullable instancetype)initWithModelPath:(NSString *)modelPath;
+- (nullable NSArray<NSNumber *> *)predictWithInput:(NSArray<NSNumber *> *)input;
+
+@end
+
+NS_ASSUME_NONNULL_END
+```
+
+### 3.2 Create TorchBridge.mm
+
+**File → New → File → Objective-C File**
+
+Name: `TorchBridge` (Xcode will create `.m`, rename to `.mm`)
+
+```objc
+#import "TorchBridge.h"
+#import <LibTorch-Lite/Libtorch.h>
+
+@implementation TorchBridge {
+    torch::jit::mobile::Module _module;
+}
+
+- (nullable instancetype)initWithModelPath:(NSString *)modelPath {
+    self = [super init];
+    if (self) {
+        try {
+            _module = torch::jit::_load_for_mobile([modelPath UTF8String]);
+        } catch (const std::exception& e) {
+            NSLog(@"Error loading model: %s", e.what());
+            return nil;
+        }
+    }
+    return self;
+}
+
+- (nullable NSArray<NSNumber *> *)predictWithInput:(NSArray<NSNumber *> *)input {
+    try {
+        // Convert NSArray to tensor
+        std::vector<int64_t> inputVec;
+        for (NSNumber *num in input) {
+            inputVec.push_back([num longLongValue]);
+        }
+        
+        // Create tensor [1, seq_length]
+        auto inputTensor = torch::from_blob(
+            inputVec.data(),
+            {1, (long)inputVec.size()},
+            torch::kLong
+        ).clone();
+        
+        // Run inference
+        std::vector<torch::jit::IValue> inputs;
+        inputs.push_back(inputTensor);
+        
+        auto output = _module.forward(inputs).toTuple()->elements()[0].toTensor();
+        
+        // Get last token's logits
+        auto lastLogits = output[0][-1];
+        auto logitsAccessor = lastLogits.accessor<float, 1>();
+        
+        // Convert to NSArray
+        NSMutableArray *result = [NSMutableArray array];
+        for (int i = 0; i < lastLogits.size(0); i++) {
+            [result addObject:@(logitsAccessor[i])];
+        }
+        
+        return result;
+        
+    } catch (const std::exception& e) {
+        NSLog(@"Error during inference: %s", e.what());
+        return nil;
+    }
+}
+
+@end
+```
+
+### 3.3 Create Bridging Header
+
+If Xcode doesn't create it automatically:
+
+**File → New → File → Header File**
+
+Name: `YourProject-Bridging-Header.h`
+
+```objc
+#import "TorchBridge.h"
+```
+
+**Build Settings → Swift Compiler - General → Objective-C Bridging Header**:
+Set to: `YourProject-Bridging-Header.h`
+
+---
+
+## Step 4: Create Swift Wrapper
+
+### 4.1 Create KeyboardAIModel.swift
 
 ```swift
 import Foundation
-import SentencePiece // If using SPM
-
-class Tokenizer {
-    private var processor: SentencePieceProcessor?
-    
-    init() {
-        guard let modelPath = Bundle.main.path(
-            forResource: "tokenizer",
-            ofType: "model"
-        ) else {
-            print("Error: tokenizer.model not found")
-            return
-        }
-        
-        processor = SentencePieceProcessor(modelPath: modelPath)
-    }
-    
-    func encode(_ text: String) -> [Int32] {
-        guard let processor = processor else { return [] }
-        return processor.encode(text)
-    }
-    
-    func decode(_ ids: [Int32]) -> String {
-        guard let processor = processor else { return "" }
-        return processor.decode(ids)
-    }
-    
-    func idToPiece(_ id: Int32) -> String {
-        guard let processor = processor else { return "" }
-        return processor.idToPiece(id)
-    }
-    
-    func vocabSize() -> Int {
-        guard let processor = processor else { return 0 }
-        return processor.vocabSize()
-    }
-}
-```
-
-### 3.2 Model Wrapper
-
-```swift
-import CoreML
 
 class KeyboardAIModel {
-    private var model: KeyboardAI?
+    private let torchBridge: TorchBridge
     private let tokenizer: Tokenizer
+    private let vocabSize: Int
     
-    init() {
-        // Load Core ML model
-        do {
-            let config = MLModelConfiguration()
-            config.computeUnits = .cpuAndNeuralEngine // Use Neural Engine
-            model = try KeyboardAI(configuration: config)
-        } catch {
-            print("Error loading model: \(error)")
+    init?() {
+        // Get model path
+        guard let modelPath = Bundle.main.path(forResource: "tiny_lstm", ofType: "pt") else {
+            print("Model file not found")
+            return nil
         }
         
+        // Initialize PyTorch bridge
+        guard let bridge = TorchBridge(modelPath: modelPath) else {
+            print("Failed to load PyTorch model")
+            return nil
+        }
+        self.torchBridge = bridge
+        
         // Initialize tokenizer
-        tokenizer = Tokenizer()
+        guard let tokenizer = Tokenizer() else {
+            print("Failed to load tokenizer")
+            return nil
+        }
+        self.tokenizer = tokenizer
+        self.vocabSize = tokenizer.vocabSize
     }
     
     func predict(text: String, topK: Int = 5) -> [String] {
-        guard let model = model else { return [] }
-        
         // Tokenize input
         let tokenIds = tokenizer.encode(text)
         guard !tokenIds.isEmpty else { return [] }
         
-        // Prepare input
-        let input = try? KeyboardAIInput(
-            input_ids: MLMultiArray(tokenIds)
-        )
+        // Take last 50 tokens (model's max sequence length)
+        let input = Array(tokenIds.suffix(50))
         
-        guard let input = input else { return [] }
+        // Convert to NSNumber array
+        let inputNumbers = input.map { NSNumber(value: $0) }
         
         // Run inference
-        guard let output = try? model.prediction(input: input) else {
+        guard let logits = torchBridge.predict(withInput: inputNumbers) else {
+            print("Inference failed")
             return []
         }
-        
-        // Get logits
-        let logits = output.logits
         
         // Get top-K predictions
         let topIndices = getTopK(logits: logits, k: topK)
         
         // Convert to words
-        return topIndices.map { tokenizer.idToPiece(Int32($0)) }
+        return topIndices.map { tokenizer.decode([$0]) }
     }
     
-    private func getTopK(logits: MLMultiArray, k: Int) -> [Int] {
-        // Convert MLMultiArray to array
-        let count = logits.count
-        var scores: [(index: Int, value: Float)] = []
-        
-        for i in 0..<count {
-            let value = logits[i].floatValue
-            scores.append((i, value))
-        }
-        
-        // Sort by score
-        scores.sort { $0.value > $1.value }
-        
-        // Return top-K indices
-        return Array(scores.prefix(k).map { $0.index })
-    }
-}
-
-// Helper extension for MLMultiArray
-extension MLMultiArray {
-    convenience init(_ array: [Int32]) {
-        try! self.init(shape: [1, array.count] as [NSNumber], dataType: .int32)
-        for (index, value) in array.enumerated() {
-            self[index] = NSNumber(value: value)
-        }
+    private func getTopK(logits: [NSNumber], k: Int) -> [Int] {
+        let scores = logits.enumerated().map { (index: $0, value: $1.floatValue) }
+        let sorted = scores.sorted { $0.value > $1.value }
+        return Array(sorted.prefix(k).map { $0.index })
     }
 }
 ```
 
-### 3.3 Custom Dictionary
+### 4.2 Create Tokenizer.swift
 
 ```swift
 import Foundation
 
-class CustomDictionary {
-    private var entries: [String: String] = [:]
+class Tokenizer {
+    private var handle: OpaquePointer?
+    let vocabSize: Int
     
-    init() {
-        loadDictionary()
-    }
-    
-    private func loadDictionary() {
-        guard let path = Bundle.main.path(
-            forResource: "custom_dictionary",
-            ofType: "json"
-        ) else { return }
-        
-        guard let data = try? Data(contentsOf: URL(fileURLWithPath: path)),
-              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let entries = json["entries"] as? [String: [String: Any]] else {
-            return
+    init?() {
+        guard let modelPath = Bundle.main.path(forResource: "tokenizer", ofType: "model") else {
+            print("Tokenizer model not found")
+            return nil
         }
         
-        for (key, value) in entries {
-            if let expansion = value["value"] as? String {
-                self.entries[key.lowercased()] = expansion
-            }
+        // Load SentencePiece model (you'll need to add SentencePiece library)
+        // For now, using a simple implementation
+        // In production, use: https://github.com/google/sentencepiece
+        
+        // Read vocab size from model_info.json
+        if let infoPath = Bundle.main.path(forResource: "model_info", ofType: "json"),
+           let data = try? Data(contentsOf: URL(fileURLWithPath: infoPath)),
+           let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+           let vocab = json["vocab_size"] as? Int {
+            self.vocabSize = vocab
+        } else {
+            self.vocabSize = 100 // Default
         }
     }
     
-    func lookup(_ prefix: String) -> [String] {
-        let lowercased = prefix.lowercased()
-        return entries
-            .filter { $0.key.hasPrefix(lowercased) }
-            .map { $0.value }
-    }
-    
-    func get(_ key: String) -> String? {
-        return entries[key.lowercased()]
-    }
-}
-```
-
-### 3.4 Prediction Engine
-
-```swift
-class PredictionEngine {
-    private let model: KeyboardAIModel
-    private let dictionary: CustomDictionary
-    
-    init() {
-        model = KeyboardAIModel()
-        dictionary = CustomDictionary()
-    }
-    
-    func getSuggestions(for text: String, count: Int = 5) -> [String] {
-        var suggestions: [String] = []
-        
-        // 1. Check custom dictionary
-        let words = text.split(separator: " ")
-        if let lastWord = words.last {
-            let customMatches = dictionary.lookup(String(lastWord))
-            suggestions.append(contentsOf: customMatches)
+    func encode(_ text: String) -> [Int] {
+        // Simplified tokenization
+        // In production, use SentencePiece C++ library
+        let words = text.lowercased().components(separatedBy: .whitespaces)
+        return words.map { word in
+            // Simple hash-based encoding (replace with SentencePiece)
+            abs(word.hashValue % vocabSize)
         }
-        
-        // 2. Get model predictions
-        if suggestions.count < count {
-            let modelPredictions = model.predict(
-                text: text,
-                topK: count - suggestions.count
-            )
-            
-            // Filter duplicates
-            for prediction in modelPredictions {
-                if !suggestions.contains(prediction) {
-                    suggestions.append(prediction)
-                }
-            }
-        }
-        
-        // Return top N
-        return Array(suggestions.prefix(count))
+    }
+    
+    func decode(_ ids: [Int]) -> String {
+        // Simplified decoding
+        // In production, use SentencePiece C++ library
+        return ids.map { String($0) }.joined(separator: " ")
     }
 }
 ```
 
 ---
 
-## Step 4: Integrate into Keyboard Extension
+## Step 5: Integrate into Keyboard
 
-### 4.1 Update KeyboardViewController
+### 5.1 Update KeyboardViewController.swift
 
 ```swift
 import UIKit
 
 class KeyboardViewController: UIInputViewController {
     
-    private var predictionEngine: PredictionEngine!
+    private var model: KeyboardAIModel?
     private var suggestionBar: UIStackView!
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        // Initialize prediction engine
-        predictionEngine = PredictionEngine()
+        // Load model
+        model = KeyboardAIModel()
+        if model == nil {
+            print("Failed to initialize model")
+        }
         
         // Setup UI
         setupSuggestionBar()
@@ -317,193 +331,100 @@ class KeyboardViewController: UIInputViewController {
         suggestionBar = UIStackView()
         suggestionBar.axis = .horizontal
         suggestionBar.distribution = .fillEqually
-        suggestionBar.spacing = 8
+        suggestionBar.spacing = 4
+        suggestionBar.backgroundColor = .systemGray6
         
         view.addSubview(suggestionBar)
         
-        // Add constraints
         suggestionBar.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             suggestionBar.topAnchor.constraint(equalTo: view.topAnchor),
-            suggestionBar.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 8),
-            suggestionBar.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -8),
+            suggestionBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            suggestionBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             suggestionBar.heightAnchor.constraint(equalToConstant: 40)
         ])
     }
     
     override func textDidChange(_ textInput: UITextInput?) {
-        // Get current text
         guard let proxy = textDocumentProxy as UITextDocumentProxy?,
-              let text = proxy.documentContextBeforeInput else {
+              let text = proxy.documentContextBeforeInput,
+              !text.isEmpty else {
+            clearSuggestions()
             return
         }
         
-        // Get suggestions
-        let suggestions = predictionEngine.getSuggestions(for: text)
-        
-        // Update UI
-        updateSuggestions(suggestions)
+        updateSuggestions(for: text)
     }
     
-    private func updateSuggestions(_ suggestions: [String]) {
-        // Clear existing buttons
+    private func updateSuggestions(for text: String) {
+        guard let model = model else { return }
+        
+        // Get predictions in background
+        DispatchQueue.global(qos: .userInteractive).async { [weak self] in
+            let suggestions = model.predict(text: text, topK: 3)
+            
+            DispatchQueue.main.async {
+                self?.displaySuggestions(suggestions)
+            }
+        }
+    }
+    
+    private func displaySuggestions(_ suggestions: [String]) {
+        // Clear existing
         suggestionBar.arrangedSubviews.forEach { $0.removeFromSuperview() }
         
-        // Add new suggestion buttons
+        // Add new suggestions
         for suggestion in suggestions {
             let button = UIButton(type: .system)
             button.setTitle(suggestion, for: .normal)
-            button.addTarget(
-                self,
-                action: #selector(suggestionTapped(_:)),
-                for: .touchUpInside
-            )
+            button.titleLabel?.font = .systemFont(ofSize: 16)
+            button.addTarget(self, action: #selector(suggestionTapped(_:)), for: .touchUpInside)
             suggestionBar.addArrangedSubview(button)
         }
     }
     
+    private func clearSuggestions() {
+        suggestionBar.arrangedSubviews.forEach { $0.removeFromSuperview() }
+    }
+    
     @objc private func suggestionTapped(_ sender: UIButton) {
         guard let suggestion = sender.title(for: .normal) else { return }
-        textDocumentProxy.insertText(suggestion)
+        textDocumentProxy.insertText(suggestion + " ")
     }
 }
 ```
 
 ---
 
-## Step 5: Optimize Performance
+## Step 6: Build Settings
 
-### 5.1 Lazy Loading
+### 6.1 Enable C++ Standard Library
 
-```swift
-class PredictionEngine {
-    private lazy var model: KeyboardAIModel = {
-        return KeyboardAIModel()
-    }()
-    
-    // Only load when first used
-}
-```
+**Build Settings → Apple Clang - Language - C++**:
+- C++ Language Dialect: `GNU++17`
+- C++ Standard Library: `libc++`
 
-### 5.2 Background Prediction
+### 6.2 Other Linker Flags
 
-```swift
-private let predictionQueue = DispatchQueue(
-    label: "com.yourapp.prediction",
-    qos: .userInteractive
-)
-
-func getSuggestions(for text: String, completion: @escaping ([String]) -> Void) {
-    predictionQueue.async {
-        let suggestions = self.predict(text)
-        DispatchQueue.main.async {
-            completion(suggestions)
-        }
-    }
-}
-```
-
-### 5.3 Caching
-
-```swift
-private var cache: [String: [String]] = [:]
-
-func getSuggestions(for text: String) -> [String] {
-    if let cached = cache[text] {
-        return cached
-    }
-    
-    let suggestions = predict(text)
-    cache[text] = suggestions
-    return suggestions
-}
-```
+**Build Settings → Linking → Other Linker Flags**:
+Add: `-all_load`
 
 ---
 
-## Step 6: Memory Management
+## Step 7: Test
 
-### 6.1 Monitor Memory Usage
+### 7.1 Build and Run
 
-```swift
-func checkMemoryUsage() {
-    var info = mach_task_basic_info()
-    var count = mach_msg_type_number_t(MemoryLayout<mach_task_basic_info>.size)/4
-    
-    let kerr: kern_return_t = withUnsafeMutablePointer(to: &info) {
-        $0.withMemoryRebound(to: integer_t.self, capacity: 1) {
-            task_info(mach_task_self_,
-                     task_flavor_t(MACH_TASK_BASIC_INFO),
-                     $0,
-                     &count)
-        }
-    }
-    
-    if kerr == KERN_SUCCESS {
-        let usedMB = Double(info.resident_size) / 1024.0 / 1024.0
-        print("Memory used: \(usedMB) MB")
-    }
-}
-```
+1. Select your keyboard extension scheme
+2. Build (⌘B)
+3. Run on simulator or device
+4. **Settings → General → Keyboard → Keyboards → Add New Keyboard**
+5. Select your keyboard
+6. Test in any app (Messages, Notes, etc.)
 
-### 6.2 Unload When Needed
+### 7.2 Debug
 
-```swift
-func didReceiveMemoryWarning() {
-    // Clear cache
-    cache.removeAll()
-    
-    // Unload model if needed
-    model = nil
-}
-```
-
----
-
-## Step 7: Testing
-
-### 7.1 Unit Tests
-
-```swift
-import XCTest
-
-class KeyboardAITests: XCTestCase {
-    var engine: PredictionEngine!
-    
-    override func setUp() {
-        engine = PredictionEngine()
-    }
-    
-    func testPrediction() {
-        let suggestions = engine.getSuggestions(for: "I'm going to")
-        XCTAssertFalse(suggestions.isEmpty)
-        XCTAssertLessThanOrEqual(suggestions.count, 5)
-    }
-    
-    func testCustomDictionary() {
-        let suggestions = engine.getSuggestions(for: "ty")
-        XCTAssertTrue(suggestions.contains("thank you"))
-    }
-    
-    func testPerformance() {
-        measure {
-            _ = engine.getSuggestions(for: "Hello world")
-        }
-        // Should be < 50ms
-    }
-}
-```
-
----
-
-## Performance Targets
-
-| Metric | Target | How to Measure |
-|--------|--------|----------------|
-| Prediction Latency | < 50ms | Use `measure {}` in tests |
-| Memory Usage | < 30MB | Use Instruments Memory Profiler |
-| Model Load Time | < 500ms | Measure in `viewDidLoad` |
-| App Extension Size | < 10MB | Check in Xcode build settings |
+View logs in Xcode console while keyboard is active.
 
 ---
 
@@ -511,52 +432,79 @@ class KeyboardAITests: XCTestCase {
 
 ### Model Not Loading
 
-**Problem**: Core ML model fails to load
+**Error**: "Model file not found"
 
-**Solutions**:
-1. Check model is added to keyboard extension target
-2. Verify iOS deployment target is 15.0+
-3. Check model file isn't corrupted
+**Solution**:
+- Verify `tiny_lstm.pt` is in keyboard extension target
+- Check Bundle Resources in Build Phases
 
-### High Memory Usage
+### Linker Errors
 
-**Problem**: Keyboard uses too much memory
+**Error**: "Undefined symbols for architecture arm64"
 
-**Solutions**:
-1. Use `.cpuOnly` instead of `.cpuAndNeuralEngine`
-2. Implement caching with size limits
-3. Unload model when not in use
+**Solution**:
+- Add `-all_load` to Other Linker Flags
+- Verify LibTorch-Lite is in Podfile
 
-### Slow Predictions
+### Memory Issues
 
-**Problem**: Predictions take > 100ms
+**Error**: Keyboard crashes or is killed
 
-**Solutions**:
-1. Use Neural Engine (`.cpuAndNeuralEngine`)
-2. Reduce sequence length
-3. Implement prediction queue
-4. Cache recent predictions
+**Solution**:
+- iOS limits keyboard extensions to ~30MB memory
+- Model + tokenizer (~700KB) should be fine
+- Implement caching carefully
+- Release resources when not in use
+
+---
+
+## Performance Optimization
+
+### 1. Lazy Loading
+
+```swift
+private lazy var model: KeyboardAIModel? = {
+    return KeyboardAIModel()
+}()
+```
+
+### 2. Prediction Caching
+
+```swift
+private var cache: [String: [String]] = [:]
+
+func getCachedPredictions(for text: String) -> [String]? {
+    return cache[text]
+}
+```
+
+### 3. Debouncing
+
+```swift
+private var predictionTimer: Timer?
+
+func debouncedPredict(text: String) {
+    predictionTimer?.invalidate()
+    predictionTimer = Timer.scheduledTimer(withTimeInterval: 0.3, repeats: false) { _ in
+        self.updateSuggestions(for: text)
+    }
+}
+```
 
 ---
 
 ## Next Steps
 
-1. ✅ Integrate package into your iOS project
-2. ✅ Test on simulator
-3. ✅ Test on physical device
-4. ✅ Measure performance metrics
-5. ✅ Provide feedback on:
-   - Prediction latency
-   - Memory usage
-   - Accuracy
-   - Any issues encountered
+1. ✅ Test on physical device
+2. ✅ Measure prediction latency (should be <50ms)
+3. ✅ Monitor memory usage
+4. ✅ Collect real training data and retrain
+5. ✅ Submit to App Store
 
 ---
 
-## Support
+## Resources
 
-For issues or questions:
-1. Check model_info.json for model details
-2. Review error logs in Xcode console
-3. Test with example inputs from test-data/
-4. Report performance metrics for optimization
+- [PyTorch Mobile iOS Docs](https://pytorch.org/mobile/ios/)
+- [LibTorch CocoaPods](https://cocoapods.org/pods/LibTorch-Lite)
+- [iOS Keyboard Extension Guide](https://developer.apple.com/documentation/uikit/keyboards_and_input/creating_a_custom_keyboard)

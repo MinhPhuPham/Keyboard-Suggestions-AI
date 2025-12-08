@@ -1,216 +1,183 @@
-# Android Integration Guide
+# Android Integration Guide - PyTorch Mobile
 
-Complete guide for integrating KeyboardAI into your Android keyboard app.
-
----
-
-## Package Contents
-
-After running `./scripts/build_android_package.sh`, you'll have:
-
-```
-android/KeyboardAI/
-├── keyboard_ai_int8.tflite   # TFLite model (quantized)
-├── tokenizer.model            # SentencePiece tokenizer
-├── tokenizer.vocab            # Vocabulary file
-├── language_rules.yaml        # Language rules
-├── custom_dictionary.json     # Custom dictionary
-├── model_info.json           # Model metadata
-└── README.md                 # Package info
-```
+Complete step-by-step guide for integrating the KeyboardAI TorchScript model into your Android keyboard app.
 
 ---
 
-## Requirements
+## Prerequisites
 
 - **Android API**: 21+ (Android 5.0+)
+- **Android Studio**: 4.0+
 - **Language**: Kotlin or Java
-- **Dependencies**:
-  - TensorFlow Lite runtime
-  - SentencePiece JNI bindings
-  - YAML parser (SnakeYAML)
-  - JSON parser (Gson or built-in)
+- **Gradle**: 7.0+
 
 ---
 
-## Step 1: Add Dependencies
+## Step 1: Setup Android Project
 
-### build.gradle (Module level)
+### 1.1 Create Input Method Service
+
+1. Open your Android project in Android Studio
+2. **File → New → Service → Service**
+3. Name it `KeyboardService`
+4. Select "Exported" and "Enabled"
+
+### 1.2 Add Model Files to Assets
+
+1. Extract `KeyboardAI-Android-Package.zip`
+2. Copy all files to `app/src/main/assets/`:
+   ```
+   app/src/main/assets/
+   ├── tiny_lstm.pt
+   ├── tokenizer.model
+   ├── tokenizer.vocab
+   ├── language_rules.yaml
+   └── custom_dictionary.json
+   ```
+
+---
+
+## Step 2: Add PyTorch Mobile Dependencies
+
+### 2.1 Update build.gradle (Project level)
 
 ```gradle
-dependencies {
-    // TensorFlow Lite
-    implementation 'org.tensorflow:tensorflow-lite:2.14.0'
-    implementation 'org.tensorflow:tensorflow-lite-support:0.4.4'
-    
-    // SentencePiece (if available, or use JNI)
-    // implementation 'com.google.sentencepiece:sentencepiece-android:0.1.0'
-    
-    // YAML parser
-    implementation 'org.yaml:snakeyaml:2.0'
-    
-    // JSON
-    implementation 'com.google.code.gson:gson:2.10.1'
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
 }
 ```
 
+### 2.2 Update build.gradle (App level)
+
+```gradle
+android {
+    compileSdk 34
+    
+    defaultConfig {
+        applicationId "com.yourapp.keyboard"
+        minSdk 21
+        targetSdk 34
+        
+        ndk {
+            abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
+        }
+    }
+    
+    buildFeatures {
+        viewBinding true
+    }
+    
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+    
+    // Prevent compression of model files
+    aaptOptions {
+        noCompress "pt", "model", "vocab"
+    }
+}
+
+dependencies {
+    // PyTorch Mobile
+    implementation 'org.pytorch:pytorch_android_lite:1.13.1'
+    implementation 'org.pytorch:pytorch_android_torchvision_lite:1.13.1'
+    
+    // Kotlin
+    implementation 'androidx.core:core-ktx:1.12.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    
+    // Coroutines for async operations
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
+}
+```
+
+### 2.3 Sync Gradle
+
+Click **Sync Now** in Android Studio.
+
 ---
 
-## Step 2: Add Files to Project
+## Step 3: Create Model Wrapper (Kotlin)
 
-### 2.1 Create Assets Folder
-
-```
-app/src/main/assets/
-├── keyboard_ai_int8.tflite
-├── tokenizer.model
-├── tokenizer.vocab
-├── language_rules.yaml
-└── custom_dictionary.json
-```
-
-### 2.2 Copy Files
-
-```bash
-cp android/KeyboardAI/*.tflite app/src/main/assets/
-cp android/KeyboardAI/tokenizer.* app/src/main/assets/
-cp android/KeyboardAI/*.yaml app/src/main/assets/
-cp android/KeyboardAI/*.json app/src/main/assets/
-```
-
----
-
-## Step 3: Create Kotlin/Java Wrapper Classes
-
-### 3.1 Tokenizer Wrapper (Kotlin)
+### 3.1 Create KeyboardAIModel.kt
 
 ```kotlin
+package com.yourapp.keyboard
+
 import android.content.Context
+import org.pytorch.IValue
+import org.pytorch.LiteModuleLoader
+import org.pytorch.Module
+import org.pytorch.Tensor
 import java.io.File
 import java.io.FileOutputStream
 
-class Tokenizer(private val context: Context) {
-    private var nativeHandle: Long = 0
+class KeyboardAIModel(private val context: Context) {
     
-    init {
-        loadModel()
-    }
-    
-    private fun loadModel() {
-        // Copy model from assets to internal storage
-        val modelFile = File(context.filesDir, "tokenizer.model")
-        
-        if (!modelFile.exists()) {
-            context.assets.open("tokenizer.model").use { input ->
-                FileOutputStream(modelFile).use { output ->
-                    input.copyTo(output)
-                }
-            }
-        }
-        
-        // Load with SentencePiece JNI
-        nativeHandle = nativeLoad(modelFile.absolutePath)
-    }
-    
-    fun encode(text: String): IntArray {
-        return nativeEncode(nativeHandle, text)
-    }
-    
-    fun decode(ids: IntArray): String {
-        return nativeDecode(nativeHandle, ids)
-    }
-    
-    fun idToPiece(id: Int): String {
-        return nativeIdToPiece(nativeHandle, id)
-    }
-    
-    fun vocabSize(): Int {
-        return nativeVocabSize(nativeHandle)
-    }
-    
-    fun close() {
-        if (nativeHandle != 0L) {
-            nativeUnload(nativeHandle)
-            nativeHandle = 0
-        }
-    }
-    
-    // Native methods (implement with JNI or use library)
-    private external fun nativeLoad(path: String): Long
-    private external fun nativeEncode(handle: Long, text: String): IntArray
-    private external fun nativeDecode(handle: Long, ids: IntArray): String
-    private external fun nativeIdToPiece(handle: Long, id: Int): String
-    private external fun nativeVocabSize(handle: Long): Int
-    private external fun nativeUnload(handle: Long)
-    
-    companion object {
-        init {
-            System.loadLibrary("sentencepiece_jni")
-        }
-    }
-}
-```
-
-### 3.2 Model Wrapper (Kotlin)
-
-```kotlin
-import android.content.Context
-import org.tensorflow.lite.Interpreter
-import org.tensorflow.lite.support.common.FileUtil
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
-
-class KeyboardAIModel(context: Context) {
-    private val interpreter: Interpreter
+    private var module: Module? = null
     private val tokenizer: Tokenizer
+    private val vocabSize: Int
     
     init {
-        // Load TFLite model
-        val modelBuffer = FileUtil.loadMappedFile(context, "keyboard_ai_int8.tflite")
+        // Load model
+        val modelPath = assetFilePath(context, "tiny_lstm.pt")
+        module = LiteModuleLoader.load(modelPath)
         
-        val options = Interpreter.Options().apply {
-            setNumThreads(4)
-            setUseNNAPI(true) // Use Android Neural Networks API
-        }
-        
-        interpreter = Interpreter(modelBuffer, options)
+        // Load tokenizer
         tokenizer = Tokenizer(context)
+        vocabSize = tokenizer.vocabSize
     }
     
     fun predict(text: String, topK: Int = 5): List<String> {
-        // Tokenize input
-        val tokenIds = tokenizer.encode(text)
-        if (tokenIds.isEmpty()) return emptyList()
+        val module = this.module ?: return emptyList()
         
-        // Prepare input tensor
-        val inputShape = interpreter.getInputTensor(0).shape()
-        val inputBuffer = ByteBuffer.allocateDirect(tokenIds.size * 4).apply {
-            order(ByteOrder.nativeOrder())
-            tokenIds.forEach { putInt(it) }
-            rewind()
+        try {
+            // Tokenize input
+            val tokenIds = tokenizer.encode(text)
+            if (tokenIds.isEmpty()) return emptyList()
+            
+            // Take last 50 tokens (model's max sequence length)
+            val input = tokenIds.takeLast(50).toLongArray()
+            
+            // Create tensor [1, seq_length]
+            val inputTensor = Tensor.fromBlob(
+                input,
+                longArrayOf(1, input.size.toLong())
+            )
+            
+            // Run inference
+            val outputTuple = module.forward(IValue.from(inputTensor)).toTuple()
+            val outputTensor = outputTuple[0].toTensor()
+            
+            // Get last token's logits [vocab_size]
+            val logits = outputTensor.dataAsFloatArray
+            val lastTokenLogits = logits.takeLast(vocabSize).toFloatArray()
+            
+            // Get top-K predictions
+            val topIndices = getTopK(lastTokenLogits, topK)
+            
+            // Convert to words
+            return topIndices.map { tokenizer.decode(listOf(it)) }
+            
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return emptyList()
         }
-        
-        // Prepare output tensor
-        val outputShape = interpreter.getOutputTensor(0).shape()
-        val vocabSize = outputShape[outputShape.size - 1]
-        val outputBuffer = ByteBuffer.allocateDirect(vocabSize * 4).apply {
-            order(ByteOrder.nativeOrder())
-        }
-        
-        // Run inference
-        interpreter.run(inputBuffer, outputBuffer)
-        
-        // Parse output
-        outputBuffer.rewind()
-        val logits = FloatArray(vocabSize) {
-            outputBuffer.float
-        }
-        
-        // Get top-K predictions
-        val topIndices = getTopK(logits, topK)
-        
-        // Convert to words
-        return topIndices.map { tokenizer.idToPiece(it) }
     }
     
     private fun getTopK(logits: FloatArray, k: Int): List<Int> {
@@ -220,145 +187,117 @@ class KeyboardAIModel(context: Context) {
     }
     
     fun close() {
-        interpreter.close()
-        tokenizer.close()
-    }
-}
-```
-
-### 3.3 Custom Dictionary (Kotlin)
-
-```kotlin
-import android.content.Context
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
-
-data class DictionaryEntry(
-    val value: String,
-    val priority: Int = 1
-)
-
-class CustomDictionary(context: Context) {
-    private val entries = mutableMapOf<String, DictionaryEntry>()
-    
-    init {
-        loadDictionary(context)
+        module?.destroy()
+        module = null
     }
     
-    private fun loadDictionary(context: Context) {
-        val json = context.assets.open("custom_dictionary.json")
-            .bufferedReader()
-            .use { it.readText() }
-        
-        val gson = Gson()
-        val type = object : TypeToken<Map<String, Any>>() {}.type
-        val data: Map<String, Any> = gson.fromJson(json, type)
-        
-        @Suppress("UNCHECKED_CAST")
-        val entriesMap = data["entries"] as? Map<String, Map<String, Any>> ?: return
-        
-        for ((key, value) in entriesMap) {
-            val expansion = value["value"] as? String ?: continue
-            val priority = (value["priority"] as? Double)?.toInt() ?: 1
-            entries[key.lowercase()] = DictionaryEntry(expansion, priority)
-        }
-    }
-    
-    fun lookup(prefix: String): List<String> {
-        val lowercased = prefix.lowercase()
-        return entries
-            .filter { it.key.startsWith(lowercased) }
-            .sortedByDescending { it.value.priority }
-            .map { it.value.value }
-    }
-    
-    fun get(key: String): String? {
-        return entries[key.lowercase()]?.value
-    }
-}
-```
-
-### 3.4 Prediction Engine (Kotlin)
-
-```kotlin
-import android.content.Context
-
-class PredictionEngine(context: Context) {
-    private val model = KeyboardAIModel(context)
-    private val dictionary = CustomDictionary(context)
-    private val cache = mutableMapOf<String, List<String>>()
-    
-    fun getSuggestions(text: String, count: Int = 5): List<String> {
-        // Check cache
-        cache[text]?.let { return it }
-        
-        val suggestions = mutableListOf<String>()
-        
-        // 1. Check custom dictionary
-        val words = text.split(" ")
-        words.lastOrNull()?.let { lastWord ->
-            val customMatches = dictionary.lookup(lastWord)
-            suggestions.addAll(customMatches)
-        }
-        
-        // 2. Get model predictions
-        if (suggestions.size < count) {
-            val modelPredictions = model.predict(
-                text,
-                topK = count - suggestions.size
-            )
+    companion object {
+        /**
+         * Copy asset file to internal storage and return path
+         */
+        fun assetFilePath(context: Context, assetName: String): String {
+            val file = File(context.filesDir, assetName)
             
-            // Filter duplicates
-            modelPredictions.forEach { prediction ->
-                if (prediction !in suggestions) {
-                    suggestions.add(prediction)
+            if (!file.exists()) {
+                context.assets.open(assetName).use { input ->
+                    FileOutputStream(file).use { output ->
+                        input.copyTo(output)
+                    }
                 }
             }
+            
+            return file.absolutePath
         }
+    }
+}
+```
+
+### 3.2 Create Tokenizer.kt
+
+```kotlin
+package com.yourapp.keyboard
+
+import android.content.Context
+import org.json.JSONObject
+
+class Tokenizer(private val context: Context) {
+    
+    val vocabSize: Int
+    
+    init {
+        // Read vocab size from model_info.json
+        vocabSize = try {
+            val json = context.assets.open("model_info.json").bufferedReader().use {
+                JSONObject(it.readText())
+            }
+            json.getInt("vocab_size")
+        } catch (e: Exception) {
+            100 // Default
+        }
+    }
+    
+    fun encode(text: String): List<Int> {
+        // Simplified tokenization
+        // In production, use SentencePiece JNI library
+        // See: https://github.com/google/sentencepiece
         
-        // Cache and return
-        val result = suggestions.take(count)
-        cache[text] = result
-        return result
+        val words = text.lowercase().split(Regex("\\s+"))
+        return words.map { word ->
+            // Simple hash-based encoding (replace with SentencePiece)
+            Math.abs(word.hashCode() % vocabSize)
+        }
     }
     
-    fun clearCache() {
-        cache.clear()
-    }
-    
-    fun close() {
-        model.close()
+    fun decode(ids: List<Int>): String {
+        // Simplified decoding
+        // In production, use SentencePiece JNI library
+        return ids.joinToString(" ")
     }
 }
 ```
 
 ---
 
-## Step 4: Integrate into Keyboard Service
+## Step 4: Create Keyboard Service
 
-### 4.1 Create Keyboard Service
+### 4.1 Create KeyboardService.kt
 
 ```kotlin
+package com.yourapp.keyboard
+
 import android.inputmethodservice.InputMethodService
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.widget.LinearLayout
 import android.widget.Button
+import kotlinx.coroutines.*
 
 class KeyboardService : InputMethodService() {
     
-    private lateinit var predictionEngine: PredictionEngine
-    private lateinit var suggestionBar: LinearLayout
+    private var model: KeyboardAIModel? = null
+    private var suggestionBar: LinearLayout? = null
+    private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     
     override fun onCreate() {
         super.onCreate()
-        predictionEngine = PredictionEngine(this)
+        
+        // Load model in background
+        scope.launch(Dispatchers.IO) {
+            try {
+                model = KeyboardAIModel(this@KeyboardService)
+                withContext(Dispatchers.Main) {
+                    // Model loaded successfully
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
     }
     
     override fun onCreateInputView(): View {
-        val keyboardView = layoutInflater.inflate(R.layout.keyboard, null)
-        suggestionBar = keyboardView.findViewById(R.id.suggestion_bar)
-        return keyboardView
+        val view = layoutInflater.inflate(R.layout.keyboard, null)
+        suggestionBar = view.findViewById(R.id.suggestion_bar)
+        return view
     }
     
     override fun onStartInput(attribute: EditorInfo?, restarting: Boolean) {
@@ -383,52 +322,68 @@ class KeyboardService : InputMethodService() {
         val text = currentInputConnection?.getTextBeforeCursor(100, 0)?.toString()
             ?: return
         
-        // Get suggestions in background
-        Thread {
-            val suggestions = predictionEngine.getSuggestions(text)
+        if (text.isEmpty()) {
+            clearSuggestions()
+            return
+        }
+        
+        // Get predictions in background
+        scope.launch(Dispatchers.IO) {
+            val suggestions = model?.predict(text, topK = 3) ?: emptyList()
             
-            runOnUiThread {
+            withContext(Dispatchers.Main) {
                 displaySuggestions(suggestions)
             }
-        }.start()
+        }
     }
     
     private fun displaySuggestions(suggestions: List<String>) {
-        suggestionBar.removeAllViews()
+        suggestionBar?.removeAllViews()
         
         suggestions.forEach { suggestion ->
             val button = Button(this).apply {
                 text = suggestion
+                textSize = 16f
                 setOnClickListener {
-                    currentInputConnection?.commitText(suggestion, 1)
+                    currentInputConnection?.commitText(suggestion + " ", 1)
                 }
             }
-            suggestionBar.addView(button)
+            
+            suggestionBar?.addView(button)
         }
     }
     
+    private fun clearSuggestions() {
+        suggestionBar?.removeAllViews()
+    }
+    
     override fun onDestroy() {
-        predictionEngine.close()
+        model?.close()
+        scope.cancel()
         super.onDestroy()
     }
 }
 ```
 
-### 4.2 Keyboard Layout (XML)
+### 4.2 Create keyboard.xml Layout
+
+**res/layout/keyboard.xml**:
 
 ```xml
-<!-- res/layout/keyboard.xml -->
+<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:background="#F0F0F0">
     
     <!-- Suggestion Bar -->
     <HorizontalScrollView
         android:layout_width="match_parent"
         android:layout_height="40dp"
-        android:background="#F0F0F0">
+        android:background="#FFFFFF"
+        android:elevation="2dp">
         
         <LinearLayout
             android:id="@+id/suggestion_bar"
@@ -439,234 +394,211 @@ class KeyboardService : InputMethodService() {
     </HorizontalScrollView>
     
     <!-- Keyboard Keys (your implementation) -->
-    <!-- ... -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="8dp">
+        
+        <!-- Add your keyboard layout here -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:gravity="center"
+            android:text="Your Keyboard Layout"
+            android:textSize="18sp"/>
+    </LinearLayout>
     
 </LinearLayout>
 ```
 
-### 4.3 AndroidManifest.xml
+---
+
+## Step 5: Configure AndroidManifest.xml
 
 ```xml
-<service
-    android:name=".KeyboardService"
-    android:label="@string/keyboard_name"
-    android:permission="android.permission.BIND_INPUT_METHOD">
-    <intent-filter>
-        <action android:name="android.view.InputMethod"/>
-    </intent-filter>
-    <meta-data
-        android:name="android.view.im"
-        android:resource="@xml/method"/>
-</service>
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.yourapp.keyboard">
+    
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/Theme.AppCompat">
+        
+        <!-- Keyboard Service -->
+        <service
+            android:name=".KeyboardService"
+            android:label="@string/keyboard_name"
+            android:permission="android.permission.BIND_INPUT_METHOD"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.view.InputMethod"/>
+            </intent-filter>
+            <meta-data
+                android:name="android.view.im"
+                android:resource="@xml/method"/>
+        </service>
+        
+    </application>
+    
+</manifest>
 ```
 
 ---
 
-## Step 5: Optimize Performance
+## Step 6: Create Input Method Configuration
 
-### 5.1 Use Coroutines
+**res/xml/method.xml**:
 
-```kotlin
-import kotlinx.coroutines.*
-
-class PredictionEngine(context: Context) {
-    private val scope = CoroutineScope(Dispatchers.Default)
-    
-    fun getSuggestionsAsync(
-        text: String,
-        callback: (List<String>) -> Unit
-    ) {
-        scope.launch {
-            val suggestions = getSuggestions(text)
-            withContext(Dispatchers.Main) {
-                callback(suggestions)
-            }
-        }
-    }
-}
-```
-
-### 5.2 Implement LRU Cache
-
-```kotlin
-import android.util.LruCache
-
-class PredictionEngine(context: Context) {
-    private val cache = LruCache<String, List<String>>(100) // Cache 100 entries
-    
-    fun getSuggestions(text: String, count: Int = 5): List<String> {
-        cache.get(text)?.let { return it }
-        
-        // ... compute suggestions ...
-        
-        cache.put(text, result)
-        return result
-    }
-}
-```
-
-### 5.3 Lazy Initialization
-
-```kotlin
-class KeyboardService : InputMethodService() {
-    private val predictionEngine by lazy {
-        PredictionEngine(this)
-    }
-}
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<input-method xmlns:android="http://schemas.android.com/apk/res/android"
+    android:settingsActivity="com.yourapp.keyboard.SettingsActivity"
+    android:supportsSwitchingToNextInputMethod="true"/>
 ```
 
 ---
 
-## Step 6: Memory Management
+## Step 7: Build and Test
 
-### 6.1 Monitor Memory
+### 7.1 Build APK
 
-```kotlin
-import android.app.ActivityManager
-import android.content.Context
+1. **Build → Build Bundle(s) / APK(s) → Build APK(s)**
+2. Install on device
 
-fun getMemoryUsage(context: Context): Long {
-    val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) 
-        as ActivityManager
-    val memoryInfo = ActivityManager.MemoryInfo()
-    activityManager.getMemoryInfo(memoryInfo)
-    
-    val runtime = Runtime.getRuntime()
-    val usedMemory = runtime.totalMemory() - runtime.freeMemory()
-    
-    return usedMemory / (1024 * 1024) // MB
-}
-```
+### 7.2 Enable Keyboard
 
-### 6.2 Handle Low Memory
+1. **Settings → System → Languages & input → Virtual keyboard**
+2. **Manage keyboards**
+3. Enable your keyboard
+4. Test in any app (Messages, Notes, etc.)
 
-```kotlin
-override fun onLowMemory() {
-    super.onLowMemory()
-    predictionEngine.clearCache()
-}
-```
+### 7.3 Debug
 
----
-
-## Step 7: Testing
-
-### 7.1 Unit Tests
-
-```kotlin
-import org.junit.Test
-import org.junit.Assert.*
-
-class PredictionEngineTest {
-    
-    @Test
-    fun testPrediction() {
-        val engine = PredictionEngine(context)
-        val suggestions = engine.getSuggestions("I'm going to")
-        
-        assertFalse(suggestions.isEmpty())
-        assertTrue(suggestions.size <= 5)
-    }
-    
-    @Test
-    fun testCustomDictionary() {
-        val engine = PredictionEngine(context)
-        val suggestions = engine.getSuggestions("ty")
-        
-        assertTrue(suggestions.contains("thank you"))
-    }
-    
-    @Test
-    fun testPerformance() {
-        val engine = PredictionEngine(context)
-        
-        val startTime = System.currentTimeMillis()
-        engine.getSuggestions("Hello world")
-        val duration = System.currentTimeMillis() - startTime
-        
-        assertTrue("Prediction took ${duration}ms", duration < 100)
-    }
-}
-```
-
----
-
-## Performance Targets
-
-| Metric | Target | How to Measure |
-|--------|--------|----------------|
-| Prediction Latency | < 50ms | Use System.currentTimeMillis() |
-| Memory Usage | < 30MB | Use ActivityManager |
-| Model Load Time | < 500ms | Measure in onCreate() |
-| APK Size Increase | < 5MB | Check APK analyzer |
+View logs in Android Studio Logcat while keyboard is active.
 
 ---
 
 ## Troubleshooting
 
-### TFLite Model Not Loading
+### Model Not Loading
 
-**Problem**: Model fails to load from assets
+**Error**: "Failed to load model"
 
-**Solutions**:
-1. Verify file is in assets folder
-2. Check file isn't compressed (add to build.gradle):
-   ```gradle
-   aaptOptions {
-       noCompress "tflite"
-   }
-   ```
-3. Verify model file isn't corrupted
+**Solution**:
+- Verify `tiny_lstm.pt` is in `assets/` folder
+- Check `aaptOptions` in build.gradle
+- Ensure file isn't compressed
 
-### High Memory Usage
+### UnsatisfiedLinkError
 
-**Problem**: App uses too much memory
+**Error**: "couldn't find libc10.so"
 
-**Solutions**:
-1. Use INT8 quantized model
-2. Implement LRU cache with size limit
-3. Close interpreter when not in use
-4. Reduce number of threads
+**Solution**:
+- Add all ABIs to `ndk.abiFilters`
+- Clean and rebuild project
+- Check PyTorch Mobile version compatibility
 
-### Slow Predictions
+### OutOfMemoryError
 
-**Problem**: Predictions take > 100ms
+**Error**: Keyboard crashes with OOM
 
-**Solutions**:
-1. Enable NNAPI (`.setUseNNAPI(true)`)
-2. Increase thread count
-3. Use coroutines for async prediction
-4. Implement prediction queue
+**Solution**:
+- Model + tokenizer (~700KB) should be fine
+- Implement prediction caching
+- Release model when keyboard is hidden
+- Use `android:largeHeap="true"` in manifest (if needed)
 
-### SentencePiece JNI Issues
+---
 
-**Problem**: Native library not found
+## Performance Optimization
 
-**Solutions**:
-1. Build SentencePiece for Android
-2. Add .so files to jniLibs folder
-3. Or use pure Java tokenizer alternative
+### 1. Lazy Loading
+
+```kotlin
+private val model: KeyboardAIModel by lazy {
+    KeyboardAIModel(this)
+}
+```
+
+### 2. Prediction Caching
+
+```kotlin
+private val cache = mutableMapOf<String, List<String>>()
+
+fun getCachedPredictions(text: String): List<String>? {
+    return cache[text]
+}
+```
+
+### 3. Debouncing
+
+```kotlin
+private var predictionJob: Job? = null
+
+fun debouncedPredict(text: String) {
+    predictionJob?.cancel()
+    predictionJob = scope.launch {
+        delay(300) // Wait 300ms
+        updateSuggestions(text)
+    }
+}
+```
+
+### 4. Use LiteModuleLoader
+
+Already using `LiteModuleLoader` for optimized mobile inference.
+
+---
+
+## Java Version
+
+If using Java instead of Kotlin:
+
+### KeyboardAIModel.java
+
+```java
+public class KeyboardAIModel {
+    private Module module;
+    private Tokenizer tokenizer;
+    
+    public KeyboardAIModel(Context context) {
+        String modelPath = assetFilePath(context, "tiny_lstm.pt");
+        module = LiteModuleLoader.load(modelPath);
+        tokenizer = new Tokenizer(context);
+    }
+    
+    public List<String> predict(String text, int topK) {
+        // Similar implementation as Kotlin version
+        // ...
+    }
+    
+    public void close() {
+        if (module != null) {
+            module.destroy();
+            module = null;
+        }
+    }
+}
+```
 
 ---
 
 ## Next Steps
 
-1. ✅ Integrate package into your Android project
-2. ✅ Test on emulator
-3. ✅ Test on physical device
-4. ✅ Measure performance metrics
-5. ✅ Provide feedback on:
-   - Prediction latency
-   - Memory usage
-   - Accuracy
-   - Any issues encountered
+1. ✅ Test on physical device
+2. ✅ Measure prediction latency (should be <50ms)
+3. ✅ Monitor memory usage
+4. ✅ Collect real training data and retrain
+5. ✅ Publish to Google Play Store
 
 ---
 
-## Support
+## Resources
 
-For issues or questions:
-1. Check model_info.json for model details
-2. Review logcat output
-3. Test with example inputs from test-data/
-4. Report performance metrics for optimization
+- [PyTorch Mobile Android Docs](https://pytorch.org/mobile/android/)
+- [PyTorch Android GitHub](https://github.com/pytorch/android-demo-app)
+- [Android Input Method Guide](https://developer.android.com/develop/ui/views/touch-and-input/creating-input-method)
+- [SentencePiece Android](https://github.com/google/sentencepiece)
