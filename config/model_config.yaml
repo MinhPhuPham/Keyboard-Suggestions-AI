@@ -1,0 +1,44 @@
+# Model Configuration
+model:
+  name: "TinyLSTM"
+  embedding_dim: 64
+  hidden_dim: 128
+  num_layers: 1
+  dropout: 0.2
+  vocab_size: 25000
+
+# Tokenizer Configuration
+tokenizer:
+  type: "sentencepiece"
+  model_type: "unigram"
+  vocab_size: 25000
+  character_coverage: 1.0
+  normalization_rule_name: "nmt_nfkc"
+  
+# Training Configuration
+training:
+  batch_size: 128
+  learning_rate: 0.001
+  num_epochs: 50
+  early_stopping_patience: 5
+  gradient_clip: 1.0
+  validation_split: 0.1
+  
+# Data Configuration
+data:
+  max_sequence_length: 50
+  min_sequence_length: 3
+  train_test_split: 0.8
+  
+# Optimization Configuration
+optimization:
+  quantization: "int8"
+  export_format: "onnx"
+  target_model_size_mb: 5
+  
+# Inference Configuration
+inference:
+  top_k: 5
+  temperature: 1.0
+  min_confidence: 0.1
+  max_latency_ms: 50

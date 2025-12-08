@@ -1,0 +1,276 @@
+{
+    "description": "Custom dictionary test entries for validation",
+    "version": "1.0",
+    "entries": [
+        {
+            "key": "ac",
+            "value": "scackscac",
+            "language": "en",
+            "category": "custom_word",
+            "priority": 1
+        },
+        {
+            "key": "ty",
+            "value": "thank you",
+            "language": "en",
+            "category": "abbreviation",
+            "priority": 1
+        },
+        {
+            "key": "brb",
+            "value": "be right back",
+            "language": "en",
+            "category": "abbreviation",
+            "priority": 1
+        },
+        {
+            "key": "omw",
+            "value": "on my way",
+            "language": "en",
+            "category": "abbreviation",
+            "priority": 1
+        },
+        {
+            "key": "idk",
+            "value": "I don't know",
+            "language": "en",
+            "category": "abbreviation",
+            "priority": 1
+        },
+        {
+            "key": "tbh",
+            "value": "to be honest",
+            "language": "en",
+            "category": "abbreviation",
+            "priority": 1
+        },
+        {
+            "key": "imo",
+            "value": "in my opinion",
+            "language": "en",
+            "category": "abbreviation",
+            "priority": 1
+        },
+        {
+            "key": "btw",
+            "value": "by the way",
+            "language": "en",
+            "category": "abbreviation",
+            "priority": 1
+        },
+        {
+            "key": "fyi",
+            "value": "for your information",
+            "language": "en",
+            "category": "abbreviation",
+            "priority": 1
+        },
+        {
+            "key": "asap",
+            "value": "as soon as possible",
+            "language": "en",
+            "category": "abbreviation",
+            "priority": 1
+        },
+        {
+            "key": "lmk",
+            "value": "let me know",
+            "language": "en",
+            "category": "abbreviation",
+            "priority": 1
+        },
+        {
+            "key": "nvm",
+            "value": "never mind",
+            "language": "en",
+            "category": "abbreviation",
+            "priority": 1
+        },
+        {
+            "key": "gtg",
+            "value": "got to go",
+            "language": "en",
+            "category": "abbreviation",
+            "priority": 1
+        },
+        {
+            "key": "ttyl",
+            "value": "talk to you later",
+            "language": "en",
+            "category": "abbreviation",
+            "priority": 1
+        },
+        {
+            "key": "np",
+            "value": "no problem",
+            "language": "en",
+            "category": "abbreviation",
+            "priority": 1
+        },
+        {
+            "key": "yw",
+            "value": "you're welcome",
+            "language": "en",
+            "category": "abbreviation",
+            "priority": 1
+        },
+        {
+            "key": "gg",
+            "value": "good game",
+            "language": "en",
+            "category": "gaming",
+            "priority": 1
+        },
+        {
+            "key": "afk",
+            "value": "away from keyboard",
+            "language": "en",
+            "category": "gaming",
+            "priority": 1
+        },
+        {
+            "key": "dm",
+            "value": "direct message",
+            "language": "en",
+            "category": "social_media",
+            "priority": 1
+        },
+        {
+            "key": "irl",
+            "value": "in real life",
+            "language": "en",
+            "category": "internet_slang",
+            "priority": 1
+        }
+    ],
+    "test_scenarios": [
+        {
+            "scenario": "prefix_match",
+            "description": "Test that typing the key prefix returns the full value",
+            "tests": [
+                {
+                    "input": "t",
+                    "should_include": [
+                        "ty",
+                        "tbh",
+                        "ttyl"
+                    ],
+                    "note": "Partial prefix match"
+                },
+                {
+                    "input": "ty",
+                    "should_include": [
+                        "thank you"
+                    ],
+                    "should_rank_first": "thank you",
+                    "note": "Exact key match"
+                },
+                {
+                    "input": "br",
+                    "should_include": [
+                        "brb"
+                    ],
+                    "note": "Partial prefix match"
+                },
+                {
+                    "input": "brb",
+                    "should_include": [
+                        "be right back"
+                    ],
+                    "should_rank_first": "be right back",
+                    "note": "Exact key match"
+                }
+            ]
+        },
+        {
+            "scenario": "hot_reload",
+            "description": "Test adding/removing entries without restart",
+            "tests": [
+                {
+                    "action": "add",
+                    "entry": {
+                        "key": "test123",
+                        "value": "test value 123"
+                    },
+                    "verify": "Typing 'test' should immediately show 'test value 123'",
+                    "max_reload_time_ms": 50
+                },
+                {
+                    "action": "remove",
+                    "entry": {
+                        "key": "test123"
+                    },
+                    "verify": "Typing 'test' should no longer show 'test value 123'",
+                    "max_reload_time_ms": 50
+                }
+            ]
+        },
+        {
+            "scenario": "priority_over_model",
+            "description": "Custom dictionary entries should rank above model predictions",
+            "tests": [
+                {
+                    "input": "ty",
+                    "custom_entry": "thank you",
+                    "model_predictions": [
+                        "type",
+                        "typical",
+                        "Tyler"
+                    ],
+                    "expected_order": [
+                        "thank you",
+                        "type",
+                        "typical",
+                        "Tyler"
+                    ],
+                    "note": "Custom entry must be first"
+                },
+                {
+                    "input": "ac",
+                    "custom_entry": "scackscac",
+                    "model_predictions": [
+                        "account",
+                        "action",
+                        "actually"
+                    ],
+                    "expected_order": [
+                        "scackscac",
+                        "account",
+                        "action",
+                        "actually"
+                    ],
+                    "note": "Custom entry must be first"
+                }
+            ]
+        },
+        {
+            "scenario": "no_duplicates",
+            "description": "Ensure custom entries don't duplicate model predictions",
+            "tests": [
+                {
+                    "input": "dm",
+                    "custom_entry": "direct message",
+                    "model_predictions": [
+                        "direct",
+                        "message",
+                        "direct message",
+                        "damage"
+                    ],
+                    "expected_result": [
+                        "direct message",
+                        "direct",
+                        "message",
+                        "damage"
+                    ],
+                    "note": "Remove duplicate 'direct message' from model predictions"
+                }
+            ]
+        }
+    ],
+    "performance_requirements": {
+        "prefix_search_time_ms": 5,
+        "hot_reload_time_ms": 50,
+        "max_dictionary_size_kb": 200,
+        "max_entries": 10000
+    }
+}

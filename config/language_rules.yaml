@@ -1,0 +1,56 @@
+# Language-Specific Rules Configuration
+
+languages:
+  en:
+    name: "English"
+    allow_teen_slang: true
+    formality: "casual"
+    emoji_frequency: "high"
+    grammar_style: "relaxed"
+    boost_tokens:
+      - "gonna"
+      - "wanna"
+      - "lol"
+      - "😂"
+      - "omg"
+      - "btw"
+      - "tbh"
+      - "ngl"
+    suppress_tokens:
+      - "whom"
+      - "whomst"
+      - "whilst"
+      - "henceforth"
+    boost_weight: 0.5
+    suppress_weight: -1.0
+    
+  ja:
+    name: "Japanese"
+    allow_teen_slang: false
+    formality: "polite"
+    emoji_frequency: "low"
+    grammar_style: "formal"
+    boost_tokens:
+      - "です"
+      - "ます"
+      - "ございます"
+      - "いたします"
+      - "おります"
+    suppress_tokens:
+      - "だ"
+      - "じゃん"
+      - "っす"
+      - "やばい"
+    boost_weight: 0.5
+    suppress_weight: -1.0
+
+# No-Mean Filter Configuration
+no_mean_filter:
+  enabled: true
+  min_entropy: 2.0
+  max_repetition_ratio: 0.5
+  min_confidence: 0.1
+  blocked_patterns:
+    - "^[a-z]{1,2}\\d+$"  # e.g., "xd123"
+    - "^([a-z])\\1{5,}$"  # e.g., "zzzzzzz"
+    - "^asdfghjkl"        # keyboard mashing

@@ -1,0 +1,229 @@
+{
+    "description": "Language-specific rules configuration for testing",
+    "version": "1.0",
+    "languages": {
+        "en": {
+            "name": "English",
+            "rules": {
+                "allow_teen_slang": true,
+                "formality": "casual",
+                "emoji_frequency": "high",
+                "grammar_style": "relaxed",
+                "boost_tokens": [
+                    "gonna",
+                    "wanna",
+                    "lol",
+                    "😂",
+                    "omg",
+                    "btw",
+                    "tbh",
+                    "ngl"
+                ],
+                "suppress_tokens": [
+                    "whom",
+                    "whomst",
+                    "whilst",
+                    "henceforth"
+                ]
+            },
+            "test_cases": [
+                {
+                    "input": "I'm",
+                    "should_boost": [
+                        "gonna",
+                        "wanna"
+                    ],
+                    "should_suppress": [
+                        "whom"
+                    ],
+                    "context": "Teen slang should be boosted"
+                },
+                {
+                    "input": "that's so",
+                    "expected_style": "casual",
+                    "should_include": [
+                        "cool",
+                        "funny",
+                        "awesome",
+                        "lol"
+                    ],
+                    "context": "Casual language style"
+                },
+                {
+                    "input": "I'm happy",
+                    "should_include_emoji": true,
+                    "expected_emoji": [
+                        "😂",
+                        "😊",
+                        "🥰"
+                    ],
+                    "context": "High emoji frequency"
+                }
+            ]
+        },
+        "ja": {
+            "name": "Japanese",
+            "rules": {
+                "allow_teen_slang": false,
+                "formality": "polite",
+                "emoji_frequency": "low",
+                "grammar_style": "formal",
+                "boost_tokens": [
+                    "です",
+                    "ます",
+                    "ございます",
+                    "いたします",
+                    "おります"
+                ],
+                "suppress_tokens": [
+                    "だ",
+                    "じゃん",
+                    "っす",
+                    "やばい"
+                ]
+            },
+            "test_cases": [
+                {
+                    "input": "ありがとう",
+                    "should_boost": [
+                        "ございます",
+                        "ございました"
+                    ],
+                    "should_suppress": [
+                        "っす"
+                    ],
+                    "context": "Polite forms should be boosted"
+                },
+                {
+                    "input": "今日は",
+                    "expected_style": "polite",
+                    "should_include": [
+                        "いい",
+                        "良い",
+                        "ですね"
+                    ],
+                    "should_not_include": [
+                        "やばい",
+                        "じゃん"
+                    ],
+                    "context": "Formal language style"
+                },
+                {
+                    "input": "お疲れ様",
+                    "should_boost": [
+                        "です",
+                        "でした",
+                        "ございます"
+                    ],
+                    "context": "Polite work expressions"
+                }
+            ]
+        }
+    },
+    "rule_application_tests": [
+        {
+            "test_name": "logit_biasing",
+            "description": "Test that boost_tokens receive higher scores",
+            "language": "en",
+            "input": "I'm",
+            "expected_behavior": {
+                "gonna_score": ">= baseline + 0.5",
+                "wanna_score": ">= baseline + 0.5",
+                "going_score": "baseline"
+            }
+        },
+        {
+            "test_name": "token_suppression",
+            "description": "Test that suppress_tokens receive lower scores",
+            "language": "en",
+            "input": "to",
+            "expected_behavior": {
+                "whom_score": "<= baseline - 1.0",
+                "who_score": "baseline"
+            }
+        },
+        {
+            "test_name": "emoji_frequency_high",
+            "description": "Test high emoji frequency for English",
+            "language": "en",
+            "input": "I'm happy",
+            "expected_behavior": {
+                "emoji_in_top_5": true,
+                "emoji_count": ">= 2"
+            }
+        },
+        {
+            "test_name": "emoji_frequency_low",
+            "description": "Test low emoji frequency for Japanese",
+            "language": "ja",
+            "input": "嬉しい",
+            "expected_behavior": {
+                "emoji_in_top_5": false,
+                "text_suggestions_prioritized": true
+            }
+        },
+        {
+            "test_name": "formality_casual",
+            "description": "Test casual formality for English",
+            "language": "en",
+            "input": "want to",
+            "expected_behavior": {
+                "suggests_contraction": true,
+                "wanna_rank": "< want to rank"
+            }
+        },
+        {
+            "test_name": "formality_polite",
+            "description": "Test polite formality for Japanese",
+            "language": "ja",
+            "input": "行く",
+            "expected_behavior": {
+                "suggests_polite_form": true,
+                "masu_form_rank": "< plain_form_rank"
+            }
+        }
+    ],
+    "mixed_mode_tests": [
+        {
+            "test_name": "code_switching",
+            "description": "Test EN+JA mixed mode",
+            "active_languages": [
+                "en",
+                "ja"
+            ],
+            "input": "東京 is",
+            "expected_behavior": {
+                "english_suggestions": [
+                    "great",
+                    "awesome",
+                    "beautiful"
+                ],
+                "japanese_suggestions": [
+                    "最高"
+                ],
+                "both_languages_present": true
+            }
+        },
+        {
+            "test_name": "rule_conflict_resolution",
+            "description": "When both languages active, use context to determine rules",
+            "active_languages": [
+                "en",
+                "ja"
+            ],
+            "input": "I love 寿司",
+            "expected_behavior": {
+                "last_word_language": "ja",
+                "apply_rules_for": "en",
+                "emoji_frequency": "high",
+                "note": "Use rules from language of current input context"
+            }
+        }
+    ],
+    "performance_requirements": {
+        "rule_application_time_ms": 5,
+        "logit_bias_overhead_ms": 2,
+        "max_boost_tokens_per_language": 100,
+        "max_suppress_tokens_per_language": 100
+    }
+}

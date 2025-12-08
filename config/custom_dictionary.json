@@ -1,0 +1,85 @@
+{
+  "version": "1.0",
+  "entries": {
+    "ty": {
+      "value": "thank you",
+      "priority": 1
+    },
+    "brb": {
+      "value": "be right back",
+      "priority": 1
+    },
+    "omw": {
+      "value": "on my way",
+      "priority": 1
+    },
+    "idk": {
+      "value": "I don't know",
+      "priority": 1
+    },
+    "tbh": {
+      "value": "to be honest",
+      "priority": 1
+    },
+    "imo": {
+      "value": "in my opinion",
+      "priority": 1
+    },
+    "btw": {
+      "value": "by the way",
+      "priority": 1
+    },
+    "fyi": {
+      "value": "for your information",
+      "priority": 1
+    },
+    "asap": {
+      "value": "as soon as possible",
+      "priority": 1
+    },
+    "lmk": {
+      "value": "let me know",
+      "priority": 1
+    },
+    "nvm": {
+      "value": "never mind",
+      "priority": 1
+    },
+    "gtg": {
+      "value": "got to go",
+      "priority": 1
+    },
+    "ttyl": {
+      "value": "talk to you later",
+      "priority": 1
+    },
+    "np": {
+      "value": "no problem",
+      "priority": 1
+    },
+    "yw": {
+      "value": "you're welcome",
+      "priority": 1
+    },
+    "gg": {
+      "value": "good game",
+      "priority": 1
+    },
+    "afk": {
+      "value": "away from keyboard",
+      "priority": 1
+    },
+    "dm": {
+      "value": "direct message",
+      "priority": 1
+    },
+    "irl": {
+      "value": "in real life",
+      "priority": 1
+    },
+    "ac": {
+      "value": "scackscac",
+      "priority": 2
+    }
+  }
+}

@@ -1,0 +1,476 @@
+{
+    "description": "Test dataset with 30 basic examples for technical validation",
+    "version": "1.0",
+    "total_examples": 30,
+    "categories": {
+        "english_casual": 10,
+        "japanese_polite": 8,
+        "custom_dictionary": 5,
+        "emoji_symbols": 4,
+        "no_mean_filter": 3
+    },
+    "examples": [
+        {
+            "id": 1,
+            "category": "english_casual",
+            "language": "en",
+            "input": "I'm going to",
+            "expected_suggestions": [
+                "the",
+                "be",
+                "go",
+                "see",
+                "get"
+            ],
+            "context": "Casual English conversation"
+        },
+        {
+            "id": 2,
+            "category": "english_casual",
+            "language": "en",
+            "input": "wanna",
+            "expected_suggestions": [
+                "go",
+                "see",
+                "do",
+                "be",
+                "know"
+            ],
+            "context": "Teen slang enabled"
+        },
+        {
+            "id": 3,
+            "category": "english_casual",
+            "language": "en",
+            "input": "gonna",
+            "expected_suggestions": [
+                "be",
+                "go",
+                "do",
+                "make",
+                "get"
+            ],
+            "context": "Teen slang enabled"
+        },
+        {
+            "id": 4,
+            "category": "english_casual",
+            "language": "en",
+            "input": "I love",
+            "expected_suggestions": [
+                "you",
+                "it",
+                "this",
+                "that",
+                "❤️"
+            ],
+            "context": "Emoji suggestion included"
+        },
+        {
+            "id": 5,
+            "category": "english_casual",
+            "language": "en",
+            "input": "Check this out",
+            "expected_suggestions": [
+                "!",
+                "👀",
+                "😊",
+                "🔥",
+                "."
+            ],
+            "context": "Emoji and punctuation"
+        },
+        {
+            "id": 6,
+            "category": "english_casual",
+            "language": "en",
+            "input": "That's so",
+            "expected_suggestions": [
+                "cool",
+                "funny",
+                "good",
+                "nice",
+                "awesome"
+            ],
+            "context": "Common casual phrase"
+        },
+        {
+            "id": 7,
+            "category": "english_casual",
+            "language": "en",
+            "input": "lol that's",
+            "expected_suggestions": [
+                "funny",
+                "hilarious",
+                "crazy",
+                "awesome",
+                "😂"
+            ],
+            "context": "Internet slang with emoji"
+        },
+        {
+            "id": 8,
+            "category": "english_casual",
+            "language": "en",
+            "input": "See you",
+            "expected_suggestions": [
+                "later",
+                "soon",
+                "tomorrow",
+                "tonight",
+                "!"
+            ],
+            "context": "Common farewell"
+        },
+        {
+            "id": 9,
+            "category": "english_casual",
+            "language": "en",
+            "input": "Thanks for",
+            "expected_suggestions": [
+                "the",
+                "your",
+                "everything",
+                "helping",
+                "this"
+            ],
+            "context": "Gratitude expression"
+        },
+        {
+            "id": 10,
+            "category": "english_casual",
+            "language": "en",
+            "input": "I'm happy",
+            "expected_suggestions": [
+                "😊",
+                "🥰",
+                "today",
+                "to",
+                "!"
+            ],
+            "context": "Emotion with emoji suggestions"
+        },
+        {
+            "id": 11,
+            "category": "japanese_polite",
+            "language": "ja",
+            "input": "今日は",
+            "expected_suggestions": [
+                "いい",
+                "晴れ",
+                "ですね",
+                "良い",
+                "天気"
+            ],
+            "context": "Polite Japanese greeting continuation"
+        },
+        {
+            "id": 12,
+            "category": "japanese_polite",
+            "language": "ja",
+            "input": "ありがとう",
+            "expected_suggestions": [
+                "ございます",
+                "ございました",
+                "。",
+                "です",
+                "!"
+            ],
+            "context": "Polite thank you"
+        },
+        {
+            "id": 13,
+            "category": "japanese_polite",
+            "language": "ja",
+            "input": "お疲れ様",
+            "expected_suggestions": [
+                "です",
+                "でした",
+                "ございます",
+                "。",
+                "!"
+            ],
+            "context": "Polite work appreciation"
+        },
+        {
+            "id": 14,
+            "category": "japanese_polite",
+            "language": "ja",
+            "input": "よろしく",
+            "expected_suggestions": [
+                "お願いします",
+                "ございます",
+                "。",
+                "です",
+                "!"
+            ],
+            "context": "Polite request"
+        },
+        {
+            "id": 15,
+            "category": "japanese_polite",
+            "language": "ja",
+            "input": "すみません",
+            "expected_suggestions": [
+                "が",
+                "でした",
+                "。",
+                "、",
+                "ね"
+            ],
+            "context": "Polite apology/excuse me"
+        },
+        {
+            "id": 16,
+            "category": "japanese_polite",
+            "language": "ja",
+            "input": "おはよう",
+            "expected_suggestions": [
+                "ございます",
+                "。",
+                "!",
+                "です",
+                "ね"
+            ],
+            "context": "Morning greeting"
+        },
+        {
+            "id": 17,
+            "category": "japanese_polite",
+            "language": "ja",
+            "input": "いただき",
+            "expected_suggestions": [
+                "ます",
+                "ました",
+                "ません",
+                "。",
+                "まして"
+            ],
+            "context": "Polite receiving verb"
+        },
+        {
+            "id": 18,
+            "category": "japanese_polite",
+            "language": "ja",
+            "input": "失礼",
+            "expected_suggestions": [
+                "します",
+                "しました",
+                "いたします",
+                "。",
+                "ですが"
+            ],
+            "context": "Polite excuse/leave-taking"
+        },
+        {
+            "id": 19,
+            "category": "custom_dictionary",
+            "language": "en",
+            "input": "ac",
+            "expected_suggestions": [
+                "scackscac",
+                "account",
+                "action",
+                "actually",
+                "access"
+            ],
+            "context": "Custom dictionary entry first, then model suggestions",
+            "custom_entry": {
+                "key": "ac",
+                "value": "scackscac"
+            }
+        },
+        {
+            "id": 20,
+            "category": "custom_dictionary",
+            "language": "en",
+            "input": "ty",
+            "expected_suggestions": [
+                "thank you",
+                "type",
+                "typical",
+                "try",
+                "Tyler"
+            ],
+            "context": "Custom abbreviation expansion",
+            "custom_entry": {
+                "key": "ty",
+                "value": "thank you"
+            }
+        },
+        {
+            "id": 21,
+            "category": "custom_dictionary",
+            "language": "en",
+            "input": "brb",
+            "expected_suggestions": [
+                "be right back",
+                "bring",
+                "break",
+                "brown",
+                "bright"
+            ],
+            "context": "Common internet abbreviation",
+            "custom_entry": {
+                "key": "brb",
+                "value": "be right back"
+            }
+        },
+        {
+            "id": 22,
+            "category": "custom_dictionary",
+            "language": "en",
+            "input": "omw",
+            "expected_suggestions": [
+                "on my way",
+                "own",
+                "omega",
+                "omen",
+                "omit"
+            ],
+            "context": "Location/movement abbreviation",
+            "custom_entry": {
+                "key": "omw",
+                "value": "on my way"
+            }
+        },
+        {
+            "id": 23,
+            "category": "custom_dictionary",
+            "language": "en",
+            "input": "idk",
+            "expected_suggestions": [
+                "I don't know",
+                "idea",
+                "ideal",
+                "identify",
+                "identity"
+            ],
+            "context": "Uncertainty expression",
+            "custom_entry": {
+                "key": "idk",
+                "value": "I don't know"
+            }
+        },
+        {
+            "id": 24,
+            "category": "emoji_symbols",
+            "language": "en",
+            "input": "I'm so excited",
+            "expected_suggestions": [
+                "!",
+                "🎉",
+                "😊",
+                "🥳",
+                "!!"
+            ],
+            "context": "Excitement with emoji"
+        },
+        {
+            "id": 25,
+            "category": "emoji_symbols",
+            "language": "en",
+            "input": "Congratulations",
+            "expected_suggestions": [
+                "!",
+                "🎉",
+                "🎊",
+                "👏",
+                "!!"
+            ],
+            "context": "Celebration emoji"
+        },
+        {
+            "id": 26,
+            "category": "emoji_symbols",
+            "language": "en",
+            "input": "Good night",
+            "expected_suggestions": [
+                "😴",
+                "🌙",
+                "!",
+                ".",
+                "💤"
+            ],
+            "context": "Night-time emoji"
+        },
+        {
+            "id": 27,
+            "category": "emoji_symbols",
+            "language": "en",
+            "input": "I'm thinking",
+            "expected_suggestions": [
+                "🤔",
+                "about",
+                "of",
+                "that",
+                "..."
+            ],
+            "context": "Thinking emoji"
+        },
+        {
+            "id": 28,
+            "category": "no_mean_filter",
+            "language": "en",
+            "input": "xdxd123",
+            "expected_suggestions": [],
+            "context": "Random characters - should be filtered out",
+            "should_filter": true
+        },
+        {
+            "id": 29,
+            "category": "no_mean_filter",
+            "language": "en",
+            "input": "asdfghjkl",
+            "expected_suggestions": [],
+            "context": "Keyboard mashing - should be filtered out",
+            "should_filter": true
+        },
+        {
+            "id": 30,
+            "category": "no_mean_filter",
+            "language": "en",
+            "input": "zzzzzzzzz",
+            "expected_suggestions": [],
+            "context": "Repetitive spam - should be filtered out",
+            "should_filter": true
+        }
+    ],
+    "mixed_language_examples": [
+        {
+            "id": 31,
+            "category": "code_switching",
+            "language": "mixed",
+            "input": "東京 is",
+            "expected_suggestions": [
+                "great",
+                "awesome",
+                "最高",
+                "beautiful",
+                "amazing"
+            ],
+            "context": "Japanese-English code-switching"
+        },
+        {
+            "id": 32,
+            "category": "code_switching",
+            "language": "mixed",
+            "input": "I love 寿司",
+            "expected_suggestions": [
+                "!",
+                "so",
+                "very",
+                "😋",
+                "🍣"
+            ],
+            "context": "English-Japanese code-switching with food emoji"
+        }
+    ],
+    "validation_criteria": {
+        "top_1_accuracy": "Target: >50% (first suggestion matches expected)",
+        "top_3_accuracy": "Target: >70% (one of top 3 matches expected)",
+        "latency": "Target: <50ms per prediction",
+        "custom_dict_priority": "Custom entries must appear first",
+        "no_mean_filter_rate": "100% of spam patterns should be filtered"
+    }
+}
