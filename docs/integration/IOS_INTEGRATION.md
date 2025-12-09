@@ -101,13 +101,20 @@ NS_ASSUME_NONNULL_END
 
 ### 3.2 Create TorchBridge.mm
 
-**File → New → File → Objective-C File**
+**IMPORTANT**: This MUST be a `.mm` file (Objective-C++), NOT `.m` (Objective-C)!
 
-Name: `TorchBridge` (Xcode will create `.m`, rename to `.mm`)
+**Steps**:
+1. **File → New → File → Objective-C File**
+2. **Name**: `TorchBridge`
+3. Xcode will create `TorchBridge.m`
+4. **RENAME** `TorchBridge.m` → `TorchBridge.mm` (change extension!)
+5. Add this code:
+
+**TorchBridge.mm** (note the `.mm` extension!):
 
 ```objc
 #import "TorchBridge.h"
-#import <LibTorch-Lite/Libtorch.h>
+#import <torch/script.h>
 
 @implementation TorchBridge {
     torch::jit::mobile::Module _module;
@@ -128,7 +135,7 @@ Name: `TorchBridge` (Xcode will create `.m`, rename to `.mm`)
 
 - (nullable NSArray<NSNumber *> *)predictWithInput:(NSArray<NSNumber *> *)input {
     try {
-        // Convert NSArray to tensor
+        // Convert NSArray to std::vector
         std::vector<int64_t> inputVec;
         for (NSNumber *num in input) {
             inputVec.push_back([num longLongValue]);
@@ -147,7 +154,7 @@ Name: `TorchBridge` (Xcode will create `.m`, rename to `.mm`)
         
         auto output = _module.forward(inputs).toTuple()->elements()[0].toTensor();
         
-        // Get last token's logits
+        // Get last token's logits [vocab_size]
         auto lastLogits = output[0][-1];
         auto logitsAccessor = lastLogits.accessor<float, 1>();
         
@@ -429,6 +436,59 @@ View logs in Xcode console while keyboard is active.
 ---
 
 ## Troubleshooting
+
+### C++ Syntax Errors in TorchBridge
+
+**Error**: `Expected ';' at end of declaration list` or `Use of undeclared identifier 'try'`
+
+**Cause**: Your file is `.m` (Objective-C) instead of `.mm` (Objective-C++)
+
+**Solution**:
+1. **Check file extension** in Xcode Project Navigator
+2. If it shows `TorchBridge.m`, **rename it**:
+   - Right-click on `TorchBridge.m`
+   - Select **Rename**
+   - Change to `TorchBridge.mm`
+3. **Clean and rebuild**:
+   - Product → Clean Build Folder (⇧⌘K)
+   - Product → Build (⌘B)
+
+**Why**: 
+- `.m` = Objective-C (no C++ support)
+- `.mm` = Objective-C++ (supports C++ features like `try/catch`, `std::vector`, etc.)
+- PyTorch is C++, so we need `.mm`
+
+---
+
+### Import Header Not Found
+
+**Error**: `'torch/script.h' file not found` or `'LibTorch-Lite/Libtorch.h' file not found`
+
+**Solution**:
+1. **Verify CocoaPods installation**:
+   ```bash
+   cd /path/to/project
+   pod install
+   ```
+
+2. **Open workspace, not project**:
+   - Always use `YourProject.xcworkspace`
+   - NOT `YourProject.xcodeproj`
+
+3. **Use correct import**:
+   ```objc
+   #import <torch/script.h>  // ✅ Correct
+   // NOT: #import <LibTorch-Lite/Libtorch.h>  // ❌ Wrong
+   ```
+
+4. **Check Header Search Paths**:
+   - Build Settings → Search Paths → Header Search Paths
+   - Should include: `${PODS_ROOT}/LibTorch-Lite/install/include`
+   - This is usually added automatically by CocoaPods
+
+5. **Clean and rebuild**:
+   - Product → Clean Build Folder (⇧⌘K)
+   - Product → Build (⌘B)
 
 ### Model Not Loading
 
