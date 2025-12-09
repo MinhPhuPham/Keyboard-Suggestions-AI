@@ -6,3 +6,5 @@ android/KeyboardAI
 ios/KeyboardAI
 
 *.zip
+
+*.DS_Store

@@ -76,6 +76,14 @@ pod install
 
 ## Step 3: Create Objective-C++ Bridge
 
+**Why Objective-C++ is Required**:
+- PyTorch is written in **C++** (not Objective-C)
+- PyTorch requires **C++17** features (`std::variant`, etc.)
+- Swift cannot directly call C++ code
+- **Objective-C++** (`.mm` files) bridges Swift ↔ C++
+
+**You CANNOT use pure Objective-C** - it doesn't support C++ features!
+
 PyTorch is written in C++, so we need an Objective-C++ wrapper to use it from Swift.
 
 ### 3.1 Create TorchBridge.h
@@ -149,7 +157,7 @@ NS_ASSUME_NONNULL_END
         auto inputTensor = torch::from_blob(
             inputVec.data(),
             at::IntArrayRef(sizes),
-            torch::TensorOptions().dtype(torch::kLong)
+            torch::dtype(torch::kLong)
         ).clone();
         
         // Run inference
@@ -407,18 +415,43 @@ class KeyboardViewController: UIInputViewController {
 
 ---
 
-## Step 6: Build Settings
+## Step 6: Build Settings (CRITICAL!)
 
-### 6.1 Enable C++ Standard Library
+### 6.1 Enable C++17 (Required for PyTorch)
 
 **Build Settings → Apple Clang - Language - C++**:
-- C++ Language Dialect: `GNU++17`
-- C++ Standard Library: `libc++`
+
+1. **C++ Language Dialect**: `GNU++17` or `C++17`
+2. **C++ Standard Library**: `libc++` (LLVM C++ standard library)
+
+**Why C++17 is required**:
+- PyTorch uses `std::variant` (C++17 feature)
+- ATen requires C++17 or later
+- Without C++17, you'll get: `C++17 or later compatible compiler is required to use ATen`
 
 ### 6.2 Other Linker Flags
 
 **Build Settings → Linking → Other Linker Flags**:
 Add: `-all_load`
+
+**Why**: Ensures all PyTorch symbols are loaded
+
+### 6.3 Header Search Paths
+
+**Build Settings → Search Paths → Header Search Paths**:
+
+Should be automatically added by CocoaPods:
+```
+${PODS_ROOT}/LibTorch-Lite/install/include
+```
+
+If not present, add it manually with "recursive" checked.
+
+### 6.4 Disable Bitcode
+
+**Build Settings → Build Options → Enable Bitcode**: `No`
+
+**Why**: LibTorch-Lite doesn't support Bitcode
 
 ---
 
@@ -440,6 +473,29 @@ View logs in Xcode console while keyboard is active.
 ---
 
 ## Troubleshooting
+
+### C++17 Compiler Error
+
+**Error**: `C++17 or later compatible compiler is required to use ATen` or `'std::variant' is unavailable`
+
+**Cause**: Build settings not configured for C++17
+
+**Solution**:
+1. **Select your target** in Xcode
+2. **Build Settings** tab
+3. **Search for "C++ Language"**
+4. **C++ Language Dialect** → Set to `GNU++17` or `C++17`
+5. **C++ Standard Library** → Set to `libc++ (LLVM C++ standard library)`
+6. **Clean and rebuild**:
+   - Product → Clean Build Folder (⇧⌘K)
+   - Product → Build (⌘B)
+
+**Why**:
+- PyTorch uses C++17 features like `std::variant`
+- Objective-C alone cannot compile C++ code
+- You MUST use Objective-C++ (`.mm` files) with C++17 enabled
+
+---
 
 ### C++ Syntax Errors in TorchBridge
 
@@ -477,23 +533,23 @@ _module = torch::jit::_load_for_mobile([modelPath UTF8String]);
 _module = torch::jit::load([modelPath UTF8String]);
 ```
 
-**Error**: `No matching function for call to 'from_blob'`
+**Error**: `No matching function for call to 'from_blob'` or `No member named 'dtype' in 'c10::TensorOptions'`
 
-**Solution**: Use `at::IntArrayRef` for sizes parameter:
+**Solution**: Use `torch::dtype()` as a **free function**, not a method:
 ```objc
-// ❌ Wrong (initializer list not accepted)
+// ❌ Wrong (.dtype() is not a method)
 auto inputTensor = torch::from_blob(
     inputVec.data(),
-    {1, static_cast<long>(inputVec.size())},
-    torch::TensorOptions().dtype(torch::kLong)
+    at::IntArrayRef(sizes),
+    at::TensorOptions().dtype(at::kLong)  // ❌ dtype() doesn't exist!
 ).clone();
 
-// ✅ Correct (use at::IntArrayRef)
+// ✅ Correct (torch::dtype is a free function)
 std::vector<int64_t> sizes = {1, static_cast<int64_t>(inputVec.size())};
 auto inputTensor = torch::from_blob(
     inputVec.data(),
     at::IntArrayRef(sizes),
-    torch::TensorOptions().dtype(torch::kLong)
+    torch::dtype(torch::kLong)  // ✅ Free function, returns TensorOptions
 ).clone();
 ```
 
