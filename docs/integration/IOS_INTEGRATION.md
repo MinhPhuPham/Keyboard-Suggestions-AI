@@ -117,14 +117,16 @@ NS_ASSUME_NONNULL_END
 #import <torch/script.h>
 
 @implementation TorchBridge {
-    torch::jit::mobile::Module _module;
+    torch::jit::script::Module _module;
 }
 
 - (nullable instancetype)initWithModelPath:(NSString *)modelPath {
     self = [super init];
     if (self) {
         try {
-            _module = torch::jit::_load_for_mobile([modelPath UTF8String]);
+            // Load the model
+            _module = torch::jit::load([modelPath UTF8String]);
+            _module.eval();
         } catch (const std::exception& e) {
             NSLog(@"Error loading model: %s", e.what());
             return nil;
@@ -137,22 +139,24 @@ NS_ASSUME_NONNULL_END
     try {
         // Convert NSArray to std::vector
         std::vector<int64_t> inputVec;
+        inputVec.reserve([input count]);
         for (NSNumber *num in input) {
             inputVec.push_back([num longLongValue]);
         }
         
         // Create tensor [1, seq_length]
+        auto options = torch::TensorOptions().dtype(torch::kLong);
         auto inputTensor = torch::from_blob(
             inputVec.data(),
-            {1, (long)inputVec.size()},
-            torch::kLong
+            {1, static_cast<long>(inputVec.size())},
+            options
         ).clone();
         
         // Run inference
         std::vector<torch::jit::IValue> inputs;
         inputs.push_back(inputTensor);
         
-        auto output = _module.forward(inputs).toTuple()->elements()[0].toTensor();
+        auto output = _module.forward(inputs).toTuple()->elements[0].toTensor();
         
         // Get last token's logits [vocab_size]
         auto lastLogits = output[0][-1];
@@ -457,6 +461,50 @@ View logs in Xcode console while keyboard is active.
 - `.m` = Objective-C (no C++ support)
 - `.mm` = Objective-C++ (supports C++ features like `try/catch`, `std::vector`, etc.)
 - PyTorch is C++, so we need `.mm`
+
+---
+
+### LibTorch API Errors
+
+**Error**: `No member named '_load_for_mobile' in namespace 'torch::jit'`
+
+**Solution**: Use `torch::jit::load()` instead:
+```objc
+// ❌ Wrong (mobile-specific, not in all versions)
+_module = torch::jit::_load_for_mobile([modelPath UTF8String]);
+
+// ✅ Correct (standard API)
+_module = torch::jit::load([modelPath UTF8String]);
+```
+
+**Error**: `No matching function for call to 'from_blob'`
+
+**Solution**: Use `TensorOptions` to specify dtype:
+```objc
+// ❌ Wrong (missing dtype specification)
+auto inputTensor = torch::from_blob(
+    inputVec.data(),
+    {1, (long)inputVec.size()},
+    torch::kLong
+).clone();
+
+// ✅ Correct (with TensorOptions)
+auto options = torch::TensorOptions().dtype(torch::kLong);
+auto inputTensor = torch::from_blob(
+    inputVec.data(),
+    {1, static_cast<long>(inputVec.size())},
+    options
+).clone();
+```
+
+**Also change module type**:
+```objc
+// ❌ Wrong
+torch::jit::mobile::Module _module;
+
+// ✅ Correct
+torch::jit::script::Module _module;
+```
 
 ---
 
