@@ -145,11 +145,11 @@ NS_ASSUME_NONNULL_END
         }
         
         // Create tensor [1, seq_length]
-        auto options = torch::TensorOptions().dtype(torch::kLong);
+        std::vector<int64_t> sizes = {1, static_cast<int64_t>(inputVec.size())};
         auto inputTensor = torch::from_blob(
             inputVec.data(),
-            {1, static_cast<long>(inputVec.size())},
-            options
+            at::IntArrayRef(sizes),
+            torch::TensorOptions().dtype(torch::kLong)
         ).clone();
         
         // Run inference
@@ -479,21 +479,21 @@ _module = torch::jit::load([modelPath UTF8String]);
 
 **Error**: `No matching function for call to 'from_blob'`
 
-**Solution**: Use `TensorOptions` to specify dtype:
+**Solution**: Use `at::IntArrayRef` for sizes parameter:
 ```objc
-// ❌ Wrong (missing dtype specification)
-auto inputTensor = torch::from_blob(
-    inputVec.data(),
-    {1, (long)inputVec.size()},
-    torch::kLong
-).clone();
-
-// ✅ Correct (with TensorOptions)
-auto options = torch::TensorOptions().dtype(torch::kLong);
+// ❌ Wrong (initializer list not accepted)
 auto inputTensor = torch::from_blob(
     inputVec.data(),
     {1, static_cast<long>(inputVec.size())},
-    options
+    torch::TensorOptions().dtype(torch::kLong)
+).clone();
+
+// ✅ Correct (use at::IntArrayRef)
+std::vector<int64_t> sizes = {1, static_cast<int64_t>(inputVec.size())};
+auto inputTensor = torch::from_blob(
+    inputVec.data(),
+    at::IntArrayRef(sizes),
+    torch::TensorOptions().dtype(torch::kLong)
 ).clone();
 ```
 
