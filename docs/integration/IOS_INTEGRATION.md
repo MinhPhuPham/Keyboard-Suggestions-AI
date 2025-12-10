@@ -31,40 +31,6 @@ Before you start, make sure you have:
   3. Select "Up to Next Major Version" (1.0.0)
   4. Add to your keyboard extension target
 
-### 4. Understanding the Fix
-
-**Why the old code returned `["▁", "h", "l"]`**:
-
-The previous implementation had 2 critical bugs:
-
-**Bug 1: Hash-based tokenizer (not real tokenization)**
-```swift
-// ❌ WRONG: Random hash values
-func encode(_ text: String) -> [Int] {
-    return words.map { abs($0.hashValue % vocabSize) }  // Random!
-}
-```
-
-**Bug 2: Decoding individual tokens**
-```swift
-// ❌ WRONG: Returns subword pieces
-return topScores.map { tokenizer.decode([$0.index]) }
-// Result: ["▁", "h", "l"] - meaningless pieces
-```
-
-**The Fix**:
-1. Use real SentencePiece library (not hash-based)
-2. Decode full sequences (input + predicted token)
-3. Extract only the new word added
-
-```swift
-// ✅ CORRECT: Decode full sequence
-let fullSequence = tokenIds + [nextTokenId]
-let decodedText = tokenizer.decode(fullSequence)
-let newWord = extractNewPart(from: decodedText, after: originalText)
-// Result: ["ございます", "ございました", "ね"] - actual words!
-```
-
 ---
 
 Complete guide for integrating the KeyboardAI Core ML model into your iOS keyboard extension.
@@ -424,10 +390,10 @@ class KeyboardAIModel {
 **Tokenizer.swift**:
 ```swift
 import Foundation
-import SentencepieceTokenizer  // From swift-sentencepiece package
+import Sentencepiece  // From swift-sentencepiece package
 
 class Tokenizer {
-    private let processor: SentencepieceTokenizer
+    private let tokenizer: SentencepieceTokenizer
     let vocabSize: Int
     
     init?() {
@@ -438,28 +404,47 @@ class Tokenizer {
         }
         
         do {
-            self.processor = try SentencepieceTokenizer(modelPath: modelPath)
-            self.vocabSize = processor.vocabularySize
+            // Initialize with tokenOffset=0 (not Hugging Face compatible)
+            self.tokenizer = try SentencepieceTokenizer(modelPath: modelPath, tokenOffset: 0)
+            // Note: No direct vocabularySize property, estimate from model
+            self.vocabSize = 32000  // From model_info.json
         } catch {
-            print("Failed to load SentencePiece processor: \(error)")
+            print("Failed to load SentencePiece tokenizer: \(error)")
             return nil
         }
     }
     
     func encode(_ text: String) -> [Int] {
         // Encode text to token IDs
-        return processor.encode(text)
+        do {
+            return try tokenizer.encode(text)
+        } catch {
+            print("Encoding error: \(error)")
+            return []
+        }
     }
     
     func decode(_ ids: [Int]) -> String {
         // Decode token IDs back to text
-        return processor.decode(ids)
+        do {
+            return try tokenizer.decode(ids)
+        } catch {
+            print("Decoding error: \(error)")
+            return ""
+        }
     }
     
     func encodePieces(_ text: String) -> [String] {
         // Encode to pieces (for debugging)
-        return processor.encode(text, addBos: false, addEos: false)
-            .map { processor.idToPiece($0) }
+        do {
+            let ids = try tokenizer.encode(text)
+            return ids.compactMap { id in
+                try? tokenizer.idToToken(id)
+            }
+        } catch {
+            print("Encode pieces error: \(error)")
+            return []
+        }
     }
 }
 ```
@@ -467,17 +452,29 @@ class Tokenizer {
 **API Reference** (from swift-sentencepiece):
 ```swift
 // Initialize
-let tokenizer = try SentencepieceTokenizer(modelPath: path)
+let tokenizer = try SentencepieceTokenizer(
+    modelPath: path,
+    tokenOffset: 0  // 0 for standard, 1 for Hugging Face compatibility
+)
 
-// Encode
-let ids = tokenizer.encode("ありがとう")  // Returns [Int]
+// Encode (throws)
+let ids = try tokenizer.encode("ありがとう")  // Returns [Int]
 
-// Decode
-let text = tokenizer.decode(ids)  // Returns String
+// Decode (throws)
+let text = try tokenizer.decode(ids)  // Returns String
 
-// Vocabulary
-let vocabSize = tokenizer.vocabularySize  // Int
-let piece = tokenizer.idToPiece(tokenId)  // String
+// Token conversion
+let token = try tokenizer.idToToken(id)  // Int -> String
+let id = tokenizer.tokenToId(token)      // String -> Int
+
+// Special tokens
+let unkId = tokenizer.unkTokenId  // Unknown token ID
+let bosId = tokenizer.bosTokenId  // Beginning of sequence
+let eosId = tokenizer.eosTokenId  // End of sequence
+let padId = tokenizer.padTokenId  // Padding token
+
+// Normalization
+let normalized = try tokenizer.normalize(text)
 ```
 
 **Why This Fixes the Issue**:
@@ -778,7 +775,7 @@ Version: Up to Next Major (1.0.0)
 
 **2. Import in Swift**:
 ```swift
-import SentencepieceTokenizer  // Correct import name
+import Sentencepiece  // Correct import name
 ```
 
 **3. Verify installation**:
