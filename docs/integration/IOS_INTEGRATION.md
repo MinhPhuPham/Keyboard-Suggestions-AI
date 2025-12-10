@@ -144,14 +144,37 @@ ls -lh ios/KeyboardAI/model_info.json
 2. **Important**: Check "Copy items if needed" and add to keyboard extension target
 3. Xcode will automatically generate Swift classes for the model
 
-### 2.3 Add Other Files
+**Verify**:
+- File Inspector → Target Membership → Your keyboard extension is checked ✅
+- Build Phases → Copy Bundle Resources → `KeyboardAI.mlpackage` is listed
 
-Also add to your keyboard extension:
-- `tokenizer.model`
-- `tokenizer.vocab`
-- `language_rules.yaml`
-- `custom_dictionary.json`
-- `model_info.json`
+### 2.3 Add Other Required Files
+
+Also add these files to your keyboard extension (from `ios/KeyboardAI/`):
+
+**Required**:
+- ✅ `tokenizer.model` - SentencePiece tokenizer (needed for encoding text)
+- ✅ `tokenizer.vocab` - Vocabulary file (needed for decoding)
+- ✅ `model_info.json` - Model metadata (contains vocab size)
+
+**Optional** (for advanced features):
+- `language_rules.yaml` - Language-specific rules
+- `custom_dictionary.json` - Custom dictionary
+
+**How to add**:
+1. Drag all files from `ios/KeyboardAI/` into Xcode
+2. Check "Copy items if needed"
+3. Add to keyboard extension target
+4. Verify in Build Phases → Copy Bundle Resources
+
+**Your keyboard extension should have**:
+```
+Resources/
+├── KeyboardAI.mlpackage     ← Core ML model
+├── tokenizer.model          ← Required for tokenization
+├── tokenizer.vocab          ← Required for decoding
+└── model_info.json          ← Required for vocab size
+```
 
 ---
 
@@ -535,6 +558,42 @@ if let bundlePath = Bundle.main.resourcePath {
     print("Bundle files: \(files ?? [])")
 }
 ```
+
+---
+
+### Tokenizer Not Loading
+
+**Error**: "Failed to load tokenizer"
+
+**Cause**: Missing `tokenizer.model` or `tokenizer.vocab` files
+
+**Solution**:
+
+**1. Verify files are in bundle**:
+- Check `tokenizer.model` is in Copy Bundle Resources
+- Check `tokenizer.vocab` is in Copy Bundle Resources
+- Check `model_info.json` is in Copy Bundle Resources
+
+**2. Debug: Print what's in bundle**:
+```swift
+if let bundlePath = Bundle.main.resourcePath {
+    let files = try? FileManager.default.contentsOfDirectory(atPath: bundlePath)
+    print("Bundle files: \(files ?? [])")
+    
+    // Check specific files
+    if let tokenizerPath = Bundle.main.path(forResource: "tokenizer", ofType: "model") {
+        print("✅ tokenizer.model found at: \(tokenizerPath)")
+    } else {
+        print("❌ tokenizer.model NOT FOUND")
+    }
+}
+```
+
+**3. Add missing files**:
+- Drag `tokenizer.model`, `tokenizer.vocab`, `model_info.json` from `ios/KeyboardAI/`
+- Check "Copy items if needed"
+- Add to keyboard extension target
+- Clean and rebuild
 
 ---
 
