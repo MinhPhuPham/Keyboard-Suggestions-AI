@@ -8,3 +8,5 @@ ios/KeyboardAI
 *.zip
 
 *.DS_Store
+
+.venv-coreml

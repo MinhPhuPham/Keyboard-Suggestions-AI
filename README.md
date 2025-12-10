@@ -201,32 +201,38 @@ Each package contains:
 
 ### iOS Integration
 
-**Framework**: PyTorch Mobile (LibTorch-Lite)
+**Framework**: Core ML (Native iOS)
 
 **Key Steps**:
-1. Install via CocoaPods: `pod 'LibTorch-Lite', '~> 1.13.0'`
-2. Create Objective-C++ bridge (PyTorch is C++)
-3. Load TorchScript model: `torch::jit::_load_for_mobile()`
+1. Export to Core ML: `python scripts/export_coreml.py`
+2. Add `.mlpackage` to Xcode project
+3. Use pure Swift (no C++ needed!)
 4. Integrate into keyboard extension
 
 **Complete Guide**: [`docs/integration/IOS_INTEGRATION.md`](docs/integration/IOS_INTEGRATION.md)
 
 **Includes**:
-- ✅ Xcode project setup
-- ✅ CocoaPods configuration
-- ✅ Objective-C++ bridge code (`TorchBridge.h/.mm`)
-- ✅ Swift wrapper classes
+- ✅ Core ML export instructions
+- ✅ Pure Swift implementation (no Objective-C++)
 - ✅ Keyboard extension integration
-- ✅ Build settings and troubleshooting
+- ✅ Performance optimization
+- ✅ Troubleshooting
 
 **Example Code**:
 ```swift
-// Load model
-let bridge = TorchBridge(modelPath: modelPath)
+// Load Core ML model
+let model = try KeyboardAI(contentsOf: modelURL)
 
 // Run prediction
-let logits = bridge.predict(withInput: tokenIds)
+let output = try model.prediction(input_ids: inputArray)
 ```
+
+**Advantages over PyTorch Mobile**:
+- ✅ 40% smaller size (~300 KB vs ~500 KB)
+- ✅ No C++17 complexity
+- ✅ Native iOS optimization
+- ✅ Better battery efficiency
+- ✅ Simple Swift API
 
 ---
 

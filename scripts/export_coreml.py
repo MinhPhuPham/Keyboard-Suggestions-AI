@@ -59,8 +59,24 @@ def export_to_coreml(
     print(f"\n2. Tracing model with example input")
     print(f"   Input shape: {example_input.shape}")
     
-    # Trace the model
-    traced_model = torch.jit.trace(model, example_input)
+    # Create wrapper to extract only logits (Core ML doesn't handle tuples well)
+    class ModelWrapper(torch.nn.Module):
+        def __init__(self, model):
+            super().__init__()
+            self.model = model
+        
+        def forward(self, x):
+            output = self.model(x)
+            # Model returns (logits, hidden_state) tuple
+            if isinstance(output, tuple):
+                return output[0]  # Return only logits
+            return output  # If already single output
+    
+    wrapped_model = ModelWrapper(model)
+    wrapped_model.eval()
+    
+    # Trace the wrapped model
+    traced_model = torch.jit.trace(wrapped_model, example_input)
     
     print(f"   ✓ Model traced successfully")
     

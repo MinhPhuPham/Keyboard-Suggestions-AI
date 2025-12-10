@@ -1,21 +1,136 @@
-# iOS Integration Guide - PyTorch Mobile
+# iOS Integration Guide - Core ML
 
-Complete step-by-step guide for integrating the KeyboardAI TorchScript model into your iOS keyboard extension.
+Complete guide for integrating the KeyboardAI Core ML model into your iOS keyboard extension.
+
+**Why Core ML?**
+- ✅ Native iOS framework (no C++ complexity)
+- ✅ Optimized for Apple Silicon
+- ✅ Smaller model size with FP16 precision (~300 KB)
+- ✅ Lower memory usage
+- ✅ Simple Swift API (no Objective-C++ bridge needed)
+- ✅ Better battery efficiency
+
+---
+
+## Complete End-to-End Workflow
+
+### Overview
+
+```
+Train Model → Export to Core ML → Add to Xcode → Integrate in Swift
+```
+
+### Quick Start (If Model Already Trained)
+
+If you already have `models/best_model.pt`:
+
+```bash
+# 1. Create Python 3.11 environment for Core ML export
+conda create -n coreml-export python=3.11 -y
+conda activate coreml-export
+
+# 2. Install coremltools
+pip install coremltools torch sentencepiece pyyaml
+
+# 3. Export to Core ML
+python scripts/export_coreml.py \
+    --model models/best_model.pt \
+    --output ios/KeyboardAI \
+    --name KeyboardAI
+```
+
+**Output**:
+- `ios/KeyboardAI/KeyboardAI.mlpackage` (~300-500 KB)
+- `ios/KeyboardAI/model_info.json`
+
+Then skip to **Step 2** below.
+
+### Full Workflow (From Scratch)
+
+If you need to train the model first:
+
+```bash
+# 1. Train model (in your main Python 3.13 environment)
+./build-package-complete.sh --quick  # Quick 5-epoch training
+
+# 2. Switch to Python 3.11 for Core ML export
+conda create -n coreml-export python=3.11 -y
+conda activate coreml-export
+pip install coremltools torch sentencepiece pyyaml
+
+# 3. Export to Core ML
+python scripts/export_coreml.py
+```
 
 ---
 
 ## Prerequisites
 
-- **iOS**: 12.0+
+- **iOS**: 15.0+ (for Core ML)
 - **Xcode**: 13.0+
 - **Swift**: 5.0+
-- **CocoaPods**: Installed (`sudo gem install cocoapods`)
+- **Python**: 3.9-3.12 (for coremltools export)
 
 ---
 
-## Step 1: Setup Xcode Project
+## Step 1: Export Model to Core ML
 
-### 1.1 Create Keyboard Extension
+### 1.1 Install coremltools
+
+```bash
+# Create Python 3.11 environment (coremltools doesn't support 3.13)
+conda create -n coreml-export python=3.11
+conda activate coreml-export
+
+# Install dependencies
+pip install coremltools torch
+```
+
+### 1.2 Export Model
+
+```bash
+# Export trained model to Core ML
+python scripts/export_coreml.py \
+    --model models/best_model.pt \
+    --output ios/KeyboardAI \
+    --name KeyboardAI
+```
+
+**Output**:
+- `ios/KeyboardAI/KeyboardAI.mlpackage` (~300-500 KB with FP16)
+- `ios/KeyboardAI/model_info.json` (metadata)
+
+### 1.3 Important Notes
+
+**Why Python 3.11?**
+- `coremltools` requires Python 3.9-3.12
+- Your main environment uses Python 3.13 (for training)
+- You need a separate environment for Core ML export
+
+**What if export fails?**
+
+Common issues:
+1. **coremltools not installed**: Run `pip install coremltools`
+2. **Wrong Python version**: Use Python 3.9-3.12, not 3.13
+3. **Model not found**: Train model first with `./build-package-complete.sh`
+4. **LSTM compatibility**: The export script uses `torch.jit.trace` which works with LSTMs
+
+**Verify export worked**:
+```bash
+# Check output exists
+ls -lh ios/KeyboardAI/KeyboardAI.mlpackage
+ls -lh ios/KeyboardAI/model_info.json
+
+# Should see:
+# KeyboardAI.mlpackage/ (directory, ~300-500 KB)
+# model_info.json (metadata file)
+```
+
+---
+
+## Step 2: Setup Xcode Project
+
+### 2.1 Create Keyboard Extension
 
 1. Open your iOS app project in Xcode
 2. **File → New → Target**
@@ -23,274 +138,53 @@ Complete step-by-step guide for integrating the KeyboardAI TorchScript model int
 4. Name it (e.g., "SmartKeyboard")
 5. Click **Finish**
 
-### 1.2 Add Model Files
+### 2.2 Add Core ML Model
 
-1. Extract `KeyboardAI-iOS-Package.zip`
-2. Drag all files into your keyboard extension target:
-   - `tiny_lstm.pt`
-   - `tokenizer.model`
-   - `tokenizer.vocab`
-   - `language_rules.yaml`
-   - `custom_dictionary.json`
-3. **Important**: Check "Copy items if needed" and add to keyboard extension target
+1. Drag `KeyboardAI.mlpackage` into your keyboard extension target
+2. **Important**: Check "Copy items if needed" and add to keyboard extension target
+3. Xcode will automatically generate Swift classes for the model
 
----
+### 2.3 Add Other Files
 
-## Step 2: Install PyTorch Mobile via CocoaPods
-
-### 2.1 Create/Update Podfile
-
-In your project root, create or update `Podfile`:
-
-```ruby
-platform :ios, '12.0'
-
-target 'SmartKeyboard' do
-  use_frameworks!
-  
-  # PyTorch Mobile (Lite Interpreter)
-  pod 'LibTorch-Lite', '~> 1.13.0'
-end
-
-# Post-install script to fix build issues
-post_install do |installer|
-  installer.pods_project.targets.each do |target|
-    target.build_configurations.each do |config|
-      config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'arm64'
-      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '12.0'
-    end
-  end
-end
-```
-
-### 2.2 Install Dependencies
-
-```bash
-cd /path/to/your/project
-pod install
-```
-
-**Important**: From now on, open `YourProject.xcworkspace` (not `.xcodeproj`)
+Also add to your keyboard extension:
+- `tokenizer.model`
+- `tokenizer.vocab`
+- `language_rules.yaml`
+- `custom_dictionary.json`
+- `model_info.json`
 
 ---
 
-## Step 3: Create Objective-C++ Bridge
+## Step 3: Create Model Wrapper (Pure Swift!)
 
-**Why Objective-C++ is Required**:
-- PyTorch is written in **C++** (not Objective-C)
-- PyTorch requires **C++17** features (`std::variant`, etc.)
-- Swift cannot directly call C++ code
-- **Objective-C++** (`.mm` files) bridges Swift ↔ C++
-
-**You CANNOT use pure Objective-C** - it doesn't support C++ features!
-
-PyTorch is written in C++, so we need an Objective-C++ wrapper to use it from Swift.
-
-### 3.1 Create TorchBridge.h
-
-**File → New → File → Header File**
-
-Name: `TorchBridge.h`
-
-```objc
-#import <Foundation/Foundation.h>
-
-NS_ASSUME_NONNULL_BEGIN
-
-@interface TorchBridge : NSObject
-
-- (nullable instancetype)initWithModelPath:(NSString *)modelPath;
-- (nullable NSArray<NSNumber *> *)predictWithInput:(NSArray<NSNumber *> *)input;
-
-@end
-
-NS_ASSUME_NONNULL_END
-```
-
-### 3.2 Create TorchBridge.mm
-
-**IMPORTANT**: This MUST be a `.mm` file (Objective-C++), NOT `.m` (Objective-C)!
-
-**Steps**:
-1. **File → New → File → Objective-C File**
-2. **Name**: `TorchBridge`
-3. Xcode will create `TorchBridge.m`
-4. **RENAME** `TorchBridge.m` → `TorchBridge.mm` (change extension!)
-5. Add this code:
-
-**TorchBridge.mm** (note the `.mm` extension!):
-
-```objc
-#import "TorchBridge.h"
-#import <torch/script.h>
-
-@implementation TorchBridge {
-    torch::jit::script::Module _module;
-}
-
-- (nullable instancetype)initWithModelPath:(NSString *)modelPath {
-    self = [super init];
-    if (self) {
-        try {
-            // Load the model
-            _module = torch::jit::load([modelPath UTF8String]);
-            _module.eval();
-        } catch (const std::exception& e) {
-            NSLog(@"Error loading model: %s", e.what());
-            return nil;
-        }
-    }
-    return self;
-}
-
-- (nullable NSArray<NSNumber *> *)predictWithInput:(NSArray<NSNumber *> *)input {
-    try {
-        // Convert NSArray to std::vector
-        std::vector<int64_t> inputVec;
-        inputVec.reserve([input count]);
-        for (NSNumber *num in input) {
-            inputVec.push_back([num longLongValue]);
-        }
-        
-        // Create tensor [1, seq_length]
-        std::vector<int64_t> sizes = {1, static_cast<int64_t>(inputVec.size())};
-        auto inputTensor = torch::from_blob(
-            inputVec.data(),
-            at::IntArrayRef(sizes),
-            torch::dtype(torch::kLong)
-        ).clone();
-        
-        // Run inference
-        std::vector<torch::jit::IValue> inputs;
-        inputs.push_back(inputTensor);
-        
-        auto output = _module.forward(inputs).toTuple()->elements[0].toTensor();
-        
-        // Get last token's logits [vocab_size]
-        auto lastLogits = output[0][-1];
-        auto logitsAccessor = lastLogits.accessor<float, 1>();
-        
-        // Convert to NSArray
-        NSMutableArray *result = [NSMutableArray array];
-        for (int i = 0; i < lastLogits.size(0); i++) {
-            [result addObject:@(logitsAccessor[i])];
-        }
-        
-        return result;
-        
-    } catch (const std::exception& e) {
-        NSLog(@"Error during inference: %s", e.what());
-        return nil;
-    }
-}
-
-@end
-```
-
-### 3.3 Create Bridging Header
-
-If Xcode doesn't create it automatically:
-
-**File → New → File → Header File**
-
-Name: `YourProject-Bridging-Header.h`
-
-```objc
-#import "TorchBridge.h"
-```
-
-**Build Settings → Swift Compiler - General → Objective-C Bridging Header**:
-Set to: `YourProject-Bridging-Header.h`
-
----
-
-## Step 4: Create Swift Wrapper
-
-### 4.1 Create KeyboardAIModel.swift
+### 3.1 Create KeyboardAIModel.swift
 
 ```swift
 import Foundation
+import CoreML
 
 class KeyboardAIModel {
-    private let torchBridge: TorchBridge
+    private let model: KeyboardAI
     private let tokenizer: Tokenizer
     private let vocabSize: Int
     
     init?() {
-        // Get model path
-        guard let modelPath = Bundle.main.path(forResource: "tiny_lstm", ofType: "pt") else {
-            print("Model file not found")
+        // Load Core ML model
+        guard let modelURL = Bundle.main.url(forResource: "KeyboardAI", withExtension: "mlpackagec"),
+              let model = try? KeyboardAI(contentsOf: modelURL) else {
+            print("Failed to load Core ML model")
             return nil
         }
+        self.model = model
         
-        // Initialize PyTorch bridge
-        guard let bridge = TorchBridge(modelPath: modelPath) else {
-            print("Failed to load PyTorch model")
-            return nil
-        }
-        self.torchBridge = bridge
-        
-        // Initialize tokenizer
+        // Load tokenizer
         guard let tokenizer = Tokenizer() else {
             print("Failed to load tokenizer")
             return nil
         }
         self.tokenizer = tokenizer
-        self.vocabSize = tokenizer.vocabSize
-    }
-    
-    func predict(text: String, topK: Int = 5) -> [String] {
-        // Tokenize input
-        let tokenIds = tokenizer.encode(text)
-        guard !tokenIds.isEmpty else { return [] }
         
-        // Take last 50 tokens (model's max sequence length)
-        let input = Array(tokenIds.suffix(50))
-        
-        // Convert to NSNumber array
-        let inputNumbers = input.map { NSNumber(value: $0) }
-        
-        // Run inference
-        guard let logits = torchBridge.predict(withInput: inputNumbers) else {
-            print("Inference failed")
-            return []
-        }
-        
-        // Get top-K predictions
-        let topIndices = getTopK(logits: logits, k: topK)
-        
-        // Convert to words
-        return topIndices.map { tokenizer.decode([$0]) }
-    }
-    
-    private func getTopK(logits: [NSNumber], k: Int) -> [Int] {
-        let scores = logits.enumerated().map { (index: $0, value: $1.floatValue) }
-        let sorted = scores.sorted { $0.value > $1.value }
-        return Array(sorted.prefix(k).map { $0.index })
-    }
-}
-```
-
-### 4.2 Create Tokenizer.swift
-
-```swift
-import Foundation
-
-class Tokenizer {
-    private var handle: OpaquePointer?
-    let vocabSize: Int
-    
-    init?() {
-        guard let modelPath = Bundle.main.path(forResource: "tokenizer", ofType: "model") else {
-            print("Tokenizer model not found")
-            return nil
-        }
-        
-        // Load SentencePiece model (you'll need to add SentencePiece library)
-        // For now, using a simple implementation
-        // In production, use: https://github.com/google/sentencepiece
-        
-        // Read vocab size from model_info.json
+        // Read vocab size from metadata
         if let infoPath = Bundle.main.path(forResource: "model_info", ofType: "json"),
            let data = try? Data(contentsOf: URL(fileURLWithPath: infoPath)),
            let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
@@ -301,29 +195,114 @@ class Tokenizer {
         }
     }
     
+    func predict(text: String, topK: Int = 5) -> [String] {
+        // Tokenize input
+        let tokenIds = tokenizer.encode(text)
+        guard !tokenIds.isEmpty else { return [] }
+        
+        // Take last 50 tokens (model's max sequence length)
+        let input = Array(tokenIds.suffix(50))
+        
+        // Pad to fixed length if needed
+        var paddedInput = input
+        while paddedInput.count < 50 {
+            paddedInput.insert(0, at: 0) // Pad with 0
+        }
+        
+        // Convert to MLMultiArray
+        guard let inputArray = try? MLMultiArray(shape: [1, 50], dataType: .int32) else {
+            return []
+        }
+        
+        for (i, tokenId) in paddedInput.enumerated() {
+            inputArray[i] = NSNumber(value: tokenId)
+        }
+        
+        // Run inference
+        guard let output = try? model.prediction(input_ids: inputArray) else {
+            return []
+        }
+        
+        // Get logits from output
+        let logits = output.logits
+        
+        // Extract last token's predictions
+        let lastTokenStart = (paddedInput.count - 1) * vocabSize
+        var scores: [(index: Int, score: Float)] = []
+        
+        for i in 0..<vocabSize {
+            let score = logits[lastTokenStart + i].floatValue
+            scores.append((index: i, score: score))
+        }
+        
+        // Get top-K
+        let topScores = scores.sorted { $0.score > $1.score }.prefix(topK)
+        
+        // Convert to words
+        return topScores.map { tokenizer.decode([$0.index]) }
+    }
+}
+```
+
+### 3.2 Create Tokenizer.swift
+
+```swift
+import Foundation
+
+class Tokenizer {
+    private var vocabMap: [String: Int] = [:]
+    private var reverseVocabMap: [Int: String] = [:]
+    let vocabSize: Int
+    
+    init?() {
+        // Load vocabulary
+        guard let vocabPath = Bundle.main.path(forResource: "tokenizer", ofType: "vocab") else {
+            print("Tokenizer vocab not found")
+            return nil
+        }
+        
+        do {
+            let vocabContent = try String(contentsOfFile: vocabPath, encoding: .utf8)
+            let lines = vocabContent.components(separatedBy: .newlines)
+            
+            for (index, line) in lines.enumerated() {
+                let parts = line.components(separatedBy: "\t")
+                if parts.count >= 1 {
+                    let token = parts[0]
+                    vocabMap[token] = index
+                    reverseVocabMap[index] = token
+                }
+            }
+            
+            vocabSize = vocabMap.count
+        } catch {
+            print("Error loading vocab: \(error)")
+            return nil
+        }
+    }
+    
     func encode(_ text: String) -> [Int] {
         // Simplified tokenization
-        // In production, use SentencePiece C++ library
+        // In production, use SentencePiece library or implement BPE
         let words = text.lowercased().components(separatedBy: .whitespaces)
-        return words.map { word in
-            // Simple hash-based encoding (replace with SentencePiece)
+        return words.compactMap { word in
+            // Simple hash-based encoding (replace with proper SentencePiece)
             abs(word.hashValue % vocabSize)
         }
     }
     
     func decode(_ ids: [Int]) -> String {
         // Simplified decoding
-        // In production, use SentencePiece C++ library
-        return ids.map { String($0) }.joined(separator: " ")
+        return ids.compactMap { reverseVocabMap[$0] }.joined(separator: " ")
     }
 }
 ```
 
 ---
 
-## Step 5: Integrate into Keyboard
+## Step 4: Integrate into Keyboard
 
-### 5.1 Update KeyboardViewController.swift
+### 4.1 Update KeyboardViewController.swift
 
 ```swift
 import UIKit
@@ -332,14 +311,17 @@ class KeyboardViewController: UIInputViewController {
     
     private var model: KeyboardAIModel?
     private var suggestionBar: UIStackView!
+    private var predictionCache: [String: [String]] = [:]
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        // Load model
-        model = KeyboardAIModel()
-        if model == nil {
-            print("Failed to initialize model")
+        // Load model (lazy loading for better performance)
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            self?.model = KeyboardAIModel()
+            if self?.model == nil {
+                print("Failed to initialize model")
+            }
         }
         
         // Setup UI
@@ -376,11 +358,25 @@ class KeyboardViewController: UIInputViewController {
     }
     
     private func updateSuggestions(for text: String) {
+        // Check cache first
+        if let cached = predictionCache[text] {
+            displaySuggestions(cached)
+            return
+        }
+        
         guard let model = model else { return }
         
         // Get predictions in background
         DispatchQueue.global(qos: .userInteractive).async { [weak self] in
             let suggestions = model.predict(text: text, topK: 3)
+            
+            // Cache result
+            self?.predictionCache[text] = suggestions
+            
+            // Limit cache size
+            if self?.predictionCache.count ?? 0 > 100 {
+                self?.predictionCache.removeAll()
+            }
             
             DispatchQueue.main.async {
                 self?.displaySuggestions(suggestions)
@@ -415,49 +411,9 @@ class KeyboardViewController: UIInputViewController {
 
 ---
 
-## Step 6: Build Settings (CRITICAL!)
+## Step 5: Test
 
-### 6.1 Enable C++17 (Required for PyTorch)
-
-**Build Settings → Apple Clang - Language - C++**:
-
-1. **C++ Language Dialect**: `GNU++17` or `C++17`
-2. **C++ Standard Library**: `libc++` (LLVM C++ standard library)
-
-**Why C++17 is required**:
-- PyTorch uses `std::variant` (C++17 feature)
-- ATen requires C++17 or later
-- Without C++17, you'll get: `C++17 or later compatible compiler is required to use ATen`
-
-### 6.2 Other Linker Flags
-
-**Build Settings → Linking → Other Linker Flags**:
-Add: `-all_load`
-
-**Why**: Ensures all PyTorch symbols are loaded
-
-### 6.3 Header Search Paths
-
-**Build Settings → Search Paths → Header Search Paths**:
-
-Should be automatically added by CocoaPods:
-```
-${PODS_ROOT}/LibTorch-Lite/install/include
-```
-
-If not present, add it manually with "recursive" checked.
-
-### 6.4 Disable Bitcode
-
-**Build Settings → Build Options → Enable Bitcode**: `No`
-
-**Why**: LibTorch-Lite doesn't support Bitcode
-
----
-
-## Step 7: Test
-
-### 7.1 Build and Run
+### 5.1 Build and Run
 
 1. Select your keyboard extension scheme
 2. Build (⌘B)
@@ -466,159 +422,9 @@ If not present, add it manually with "recursive" checked.
 5. Select your keyboard
 6. Test in any app (Messages, Notes, etc.)
 
-### 7.2 Debug
+### 5.2 Debug
 
 View logs in Xcode console while keyboard is active.
-
----
-
-## Troubleshooting
-
-### C++17 Compiler Error
-
-**Error**: `C++17 or later compatible compiler is required to use ATen` or `'std::variant' is unavailable`
-
-**Cause**: Build settings not configured for C++17
-
-**Solution**:
-1. **Select your target** in Xcode
-2. **Build Settings** tab
-3. **Search for "C++ Language"**
-4. **C++ Language Dialect** → Set to `GNU++17` or `C++17`
-5. **C++ Standard Library** → Set to `libc++ (LLVM C++ standard library)`
-6. **Clean and rebuild**:
-   - Product → Clean Build Folder (⇧⌘K)
-   - Product → Build (⌘B)
-
-**Why**:
-- PyTorch uses C++17 features like `std::variant`
-- Objective-C alone cannot compile C++ code
-- You MUST use Objective-C++ (`.mm` files) with C++17 enabled
-
----
-
-### C++ Syntax Errors in TorchBridge
-
-**Error**: `Expected ';' at end of declaration list` or `Use of undeclared identifier 'try'`
-
-**Cause**: Your file is `.m` (Objective-C) instead of `.mm` (Objective-C++)
-
-**Solution**:
-1. **Check file extension** in Xcode Project Navigator
-2. If it shows `TorchBridge.m`, **rename it**:
-   - Right-click on `TorchBridge.m`
-   - Select **Rename**
-   - Change to `TorchBridge.mm`
-3. **Clean and rebuild**:
-   - Product → Clean Build Folder (⇧⌘K)
-   - Product → Build (⌘B)
-
-**Why**: 
-- `.m` = Objective-C (no C++ support)
-- `.mm` = Objective-C++ (supports C++ features like `try/catch`, `std::vector`, etc.)
-- PyTorch is C++, so we need `.mm`
-
----
-
-### LibTorch API Errors
-
-**Error**: `No member named '_load_for_mobile' in namespace 'torch::jit'`
-
-**Solution**: Use `torch::jit::load()` instead:
-```objc
-// ❌ Wrong (mobile-specific, not in all versions)
-_module = torch::jit::_load_for_mobile([modelPath UTF8String]);
-
-// ✅ Correct (standard API)
-_module = torch::jit::load([modelPath UTF8String]);
-```
-
-**Error**: `No matching function for call to 'from_blob'` or `No member named 'dtype' in 'c10::TensorOptions'`
-
-**Solution**: Use `torch::dtype()` as a **free function**, not a method:
-```objc
-// ❌ Wrong (.dtype() is not a method)
-auto inputTensor = torch::from_blob(
-    inputVec.data(),
-    at::IntArrayRef(sizes),
-    at::TensorOptions().dtype(at::kLong)  // ❌ dtype() doesn't exist!
-).clone();
-
-// ✅ Correct (torch::dtype is a free function)
-std::vector<int64_t> sizes = {1, static_cast<int64_t>(inputVec.size())};
-auto inputTensor = torch::from_blob(
-    inputVec.data(),
-    at::IntArrayRef(sizes),
-    torch::dtype(torch::kLong)  // ✅ Free function, returns TensorOptions
-).clone();
-```
-
-**Also change module type**:
-```objc
-// ❌ Wrong
-torch::jit::mobile::Module _module;
-
-// ✅ Correct
-torch::jit::script::Module _module;
-```
-
----
-
-### Import Header Not Found
-
-**Error**: `'torch/script.h' file not found` or `'LibTorch-Lite/Libtorch.h' file not found`
-
-**Solution**:
-1. **Verify CocoaPods installation**:
-   ```bash
-   cd /path/to/project
-   pod install
-   ```
-
-2. **Open workspace, not project**:
-   - Always use `YourProject.xcworkspace`
-   - NOT `YourProject.xcodeproj`
-
-3. **Use correct import**:
-   ```objc
-   #import <torch/script.h>  // ✅ Correct
-   // NOT: #import <LibTorch-Lite/Libtorch.h>  // ❌ Wrong
-   ```
-
-4. **Check Header Search Paths**:
-   - Build Settings → Search Paths → Header Search Paths
-   - Should include: `${PODS_ROOT}/LibTorch-Lite/install/include`
-   - This is usually added automatically by CocoaPods
-
-5. **Clean and rebuild**:
-   - Product → Clean Build Folder (⇧⌘K)
-   - Product → Build (⌘B)
-
-### Model Not Loading
-
-**Error**: "Model file not found"
-
-**Solution**:
-- Verify `tiny_lstm.pt` is in keyboard extension target
-- Check Bundle Resources in Build Phases
-
-### Linker Errors
-
-**Error**: "Undefined symbols for architecture arm64"
-
-**Solution**:
-- Add `-all_load` to Other Linker Flags
-- Verify LibTorch-Lite is in Podfile
-
-### Memory Issues
-
-**Error**: Keyboard crashes or is killed
-
-**Solution**:
-- iOS limits keyboard extensions to ~30MB memory
-- Model + tokenizer (~700KB) should be fine
-- Implement caching carefully
-- Release resources when not in use
 
 ---
 
@@ -655,6 +461,69 @@ func debouncedPredict(text: String) {
 }
 ```
 
+### 4. Background Loading
+
+```swift
+override func viewDidLoad() {
+    super.viewDidLoad()
+    
+    // Load model in background
+    DispatchQueue.global(qos: .userInitiated).async {
+        self.model = KeyboardAIModel()
+    }
+}
+```
+
+---
+
+## Troubleshooting
+
+### Model Not Loading
+
+**Error**: "Failed to load Core ML model"
+
+**Solution**:
+- Verify `KeyboardAI.mlpackage` is in keyboard extension target
+- Check Bundle Resources in Build Phases
+- Ensure iOS deployment target is 15.0+
+
+### Memory Issues
+
+**Error**: Keyboard crashes or is killed
+
+**Solution**:
+- iOS limits keyboard extensions to ~30MB memory
+- Core ML model (~500KB) + tokenizer (~250KB) should be fine
+- Implement caching carefully
+- Release resources when not in use
+- Clear prediction cache periodically
+
+### Slow Predictions
+
+**Issue**: Predictions take too long
+
+**Solution**:
+- Use prediction caching
+- Implement debouncing (300ms delay)
+- Run predictions in background queue
+- Consider reducing model size further
+
+---
+
+## Model Size Comparison
+
+| Format | Size | iOS Support | Complexity |
+|--------|------|-------------|------------|
+| PyTorch Mobile | ~500 KB | ⚠️ C++17 required | High (Objective-C++) |
+| **Core ML** | **~300 KB** | **✅ Native** | **Low (Pure Swift)** |
+
+**Core ML Advantages**:
+- 40% smaller with FP16 precision
+- No C++ dependencies
+- Native iOS optimization
+- Better battery life
+- Simpler integration
+
 ---
 
 ## Next Steps
@@ -669,6 +538,6 @@ func debouncedPredict(text: String) {
 
 ## Resources
 
-- [PyTorch Mobile iOS Docs](https://pytorch.org/mobile/ios/)
-- [LibTorch CocoaPods](https://cocoapods.org/pods/LibTorch-Lite)
+- [Core ML Documentation](https://developer.apple.com/documentation/coreml)
+- [coremltools Documentation](https://coremltools.readme.io/)
 - [iOS Keyboard Extension Guide](https://developer.apple.com/documentation/uikit/keyboards_and_input/creating_a_custom_keyboard)
