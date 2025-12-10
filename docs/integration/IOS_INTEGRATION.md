@@ -170,12 +170,24 @@ class KeyboardAIModel {
     
     init?() {
         // Load Core ML model
-        guard let modelURL = Bundle.main.url(forResource: "KeyboardAI", withExtension: "mlpackagec"),
-              let model = try? KeyboardAI(contentsOf: modelURL) else {
-            print("Failed to load Core ML model")
+        // Note: Xcode compiles .mlpackage to .mlmodelc
+        // Use compiledModelURL or load directly by class name
+        do {
+            // Option 1: Load by configuration (recommended)
+            let config = MLModelConfiguration()
+            self.model = try KeyboardAI(configuration: config)
+            
+            // Option 2: If Option 1 fails, try loading from bundle
+            // guard let modelURL = Bundle.main.url(forResource: "KeyboardAI", withExtension: "mlmodelc"),
+            //       let model = try? KeyboardAI(contentsOf: modelURL) else {
+            //     print("Failed to load Core ML model")
+            //     return nil
+            // }
+            // self.model = model
+        } catch {
+            print("Failed to load Core ML model: \(error)")
             return nil
         }
-        self.model = model
         
         // Load tokenizer
         guard let tokenizer = Tokenizer() else {
@@ -482,10 +494,49 @@ override func viewDidLoad() {
 
 **Error**: "Failed to load Core ML model"
 
-**Solution**:
-- Verify `KeyboardAI.mlpackage` is in keyboard extension target
-- Check Bundle Resources in Build Phases
-- Ensure iOS deployment target is 15.0+
+**Solutions**:
+
+**1. Check file is in target**:
+- Select `KeyboardAI.mlpackage` in Xcode
+- File Inspector → Target Membership
+- Ensure your keyboard extension is checked ✅
+
+**2. Verify bundle resources**:
+- Select your keyboard extension target
+- Build Phases → Copy Bundle Resources
+- `KeyboardAI.mlpackage` should be listed
+
+**3. Use correct loading method**:
+```swift
+// ✅ Recommended: Load by configuration
+let config = MLModelConfiguration()
+let model = try KeyboardAI(configuration: config)
+
+// ✅ Alternative: Load from compiled model
+// Xcode compiles .mlpackage to .mlmodelc
+guard let modelURL = Bundle.main.url(forResource: "KeyboardAI", withExtension: "mlmodelc") else {
+    print("Model not found in bundle")
+    return nil
+}
+let model = try KeyboardAI(contentsOf: modelURL)
+```
+
+**4. Check model was added correctly**:
+- Clean build folder (⇧⌘K)
+- Rebuild (⌘B)
+- Check build output for "Compiling KeyboardAI.mlpackage"
+
+**5. Verify in simulator/device**:
+```swift
+// Debug: Print bundle contents
+if let bundlePath = Bundle.main.resourcePath {
+    print("Bundle path: \(bundlePath)")
+    let files = try? FileManager.default.contentsOfDirectory(atPath: bundlePath)
+    print("Bundle files: \(files ?? [])")
+}
+```
+
+---
 
 ### Memory Issues
 
