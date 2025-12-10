@@ -15,16 +15,21 @@ Before you start, make sure you have:
 ### 2. iOS Development Environment
 - ✅ macOS with Xcode 14+ installed
 - ✅ iOS 15.0+ deployment target
-- ✅ CocoaPods installed (`sudo gem install cocoapods`)
 - ✅ Keyboard extension project created
 
 ### 3. Required Dependencies
 - ✅ **SentencePiece for Swift** - CRITICAL for tokenization
-  ```ruby
-  # Add to Podfile
-  pod 'sentencepiece-swift'
+  
+  **Swift Package Manager** (recommended):
   ```
-  Then run: `pod install`
+  https://github.com/jkrukowski/swift-sentencepiece
+  ```
+  
+  **Installation**:
+  1. In Xcode: File → Add Package Dependencies
+  2. Enter URL: `https://github.com/jkrukowski/swift-sentencepiece`
+  3. Select "Up to Next Major Version" (1.0.0)
+  4. Add to your keyboard extension target
 
 ### 4. Understanding the Fix
 
@@ -87,10 +92,10 @@ Use this checklist to track your integration progress:
 - [ ] Have keyboard extension project created
 
 **Step 1: Setup**:
-- [ ] Created Podfile in your project
-- [ ] Added `pod 'sentencepiece-swift'` to Podfile
-- [ ] Ran `pod install`
-- [ ] Opened `.xcworkspace` file (not `.xcodeproj`)
+- [ ] Opened project in Xcode
+- [ ] File → Add Package Dependencies
+- [ ] Added `https://github.com/jkrukowski/swift-sentencepiece`
+- [ ] Selected keyboard extension target for the package
 
 **Step 2: Add Files**:
 - [ ] Dragged `KeyboardAI.mlpackage` into Xcode
@@ -410,20 +415,19 @@ class KeyboardAIModel {
 
 **IMPORTANT**: You need to add SentencePiece library to iOS.
 
-**Add to Podfile**:
-```ruby
-pod 'sentencepiece-swift'
-```
-
-Then run: `pod install`
+**Swift Package Manager** (recommended):
+1. In Xcode: **File → Add Package Dependencies**
+2. Enter URL: `https://github.com/jkrukowski/swift-sentencepiece`
+3. Select "Up to Next Major Version" (1.0.0)
+4. Add to keyboard extension target
 
 **Tokenizer.swift**:
 ```swift
 import Foundation
-import sentencepiece_swift
+import SentencepieceTokenizer  // From swift-sentencepiece package
 
 class Tokenizer {
-    private let processor: SentencePieceProcessor
+    private let processor: SentencepieceTokenizer
     let vocabSize: Int
     
     init?() {
@@ -433,31 +437,47 @@ class Tokenizer {
             return nil
         }
         
-        guard let processor = try? SentencePieceProcessor(modelPath: modelPath) else {
-            print("Failed to load SentencePiece processor")
+        do {
+            self.processor = try SentencepieceTokenizer(modelPath: modelPath)
+            self.vocabSize = processor.vocabularySize
+        } catch {
+            print("Failed to load SentencePiece processor: \(error)")
             return nil
         }
-        
-        self.processor = processor
-        self.vocabSize = Int(processor.vocabSize())
     }
     
     func encode(_ text: String) -> [Int] {
         // Encode text to token IDs
-        return processor.encode(text).map { Int($0) }
+        return processor.encode(text)
     }
     
     func decode(_ ids: [Int]) -> String {
         // Decode token IDs back to text
-        let ids32 = ids.map { Int32($0) }
-        return processor.decode(ids32)
+        return processor.decode(ids)
     }
     
     func encodePieces(_ text: String) -> [String] {
         // Encode to pieces (for debugging)
-        return processor.encodePieces(text)
+        return processor.encode(text, addBos: false, addEos: false)
+            .map { processor.idToPiece($0) }
     }
 }
+```
+
+**API Reference** (from swift-sentencepiece):
+```swift
+// Initialize
+let tokenizer = try SentencepieceTokenizer(modelPath: path)
+
+// Encode
+let ids = tokenizer.encode("ありがとう")  // Returns [Int]
+
+// Decode
+let text = tokenizer.decode(ids)  // Returns String
+
+// Vocabulary
+let vocabSize = tokenizer.vocabularySize  // Int
+let piece = tokenizer.idToPiece(tokenId)  // String
 ```
 
 **Why This Fixes the Issue**:
@@ -743,47 +763,53 @@ if let bundlePath = Bundle.main.resourcePath {
 
 ---
 
-### SentencePiece Pod Not Found
+### SentencePiece Package Issues
 
-**Error**: `Unable to find a specification for 'sentencepiece-swift'`
+**Error**: Cannot find package or import fails
 
-**Cause**: The pod name might be different or you need to update CocoaPods
+**Solution - Use Swift Package Manager**:
 
-**Solutions**:
+**1. Add Package in Xcode**:
+```
+File → Add Package Dependencies
+URL: https://github.com/jkrukowski/swift-sentencepiece
+Version: Up to Next Major (1.0.0)
+```
 
-**1. Update CocoaPods**:
+**2. Import in Swift**:
+```swift
+import SentencepieceTokenizer  // Correct import name
+```
+
+**3. Verify installation**:
+- Check Package Dependencies in Project Navigator
+- Should see "swift-sentencepiece" listed
+- Build (⌘B) should succeed
+
+**4. If package fails to resolve**:
 ```bash
-sudo gem install cocoapods
-pod repo update
+# Clear package cache
+rm -rf ~/Library/Caches/org.swift.swiftpm
+rm -rf ~/Library/Developer/Xcode/DerivedData
+
+# In Xcode: File → Packages → Reset Package Caches
 ```
 
-**2. Try alternative pod names**:
-```ruby
-# Try these alternatives in Podfile
-pod 'sentencepiece-swift'
-# OR
-pod 'SentencePiece'
-# OR
-pod 'SwiftSentencePiece'
-```
+**5. Alternative: Manual installation**:
 
-**3. Manual installation** (if pod not available):
+If Swift Package Manager doesn't work, you can build SentencePiece manually:
 
-Download SentencePiece C++ library and create Swift wrapper:
 ```bash
-# Install via Homebrew
-brew install sentencepiece
+# Clone the repository
+git clone https://github.com/jkrukowski/swift-sentencepiece
+cd swift-sentencepiece
 
-# Then add to Xcode:
-# - Link against libsentencepiece.dylib
-# - Create Swift bridging header
-# - Wrap C++ API in Swift
+# Build with Swift
+swift build -c release
+
+# Copy built framework to your project
+# Then add as a local framework in Xcode
 ```
-
-**4. Alternative: Use Python bridge** (temporary solution):
-- Keep tokenization on server/Python side
-- Send token IDs to iOS
-- Only run Core ML model on device
 
 ---
 
