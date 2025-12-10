@@ -1,5 +1,67 @@
 # iOS Integration Guide - Core ML
 
+## ⚠️ Requirements
+
+Before you start, make sure you have:
+
+### 1. Required Files (from training)
+- ✅ `ios/KeyboardAI/KeyboardAI.mlpackage` (~25 MB) - Core ML model
+- ✅ `ios/KeyboardAI/tokenizer.model` (~788 KB) - SentencePiece tokenizer
+- ✅ `ios/KeyboardAI/tokenizer.vocab` (~581 KB) - Vocabulary file
+- ✅ `ios/KeyboardAI/model_info.json` - Model metadata
+
+**Get these by running**: `./build-package-complete.sh`
+
+### 2. iOS Development Environment
+- ✅ macOS with Xcode 14+ installed
+- ✅ iOS 15.0+ deployment target
+- ✅ CocoaPods installed (`sudo gem install cocoapods`)
+- ✅ Keyboard extension project created
+
+### 3. Required Dependencies
+- ✅ **SentencePiece for Swift** - CRITICAL for tokenization
+  ```ruby
+  # Add to Podfile
+  pod 'sentencepiece-swift'
+  ```
+  Then run: `pod install`
+
+### 4. Understanding the Fix
+
+**Why the old code returned `["▁", "h", "l"]`**:
+
+The previous implementation had 2 critical bugs:
+
+**Bug 1: Hash-based tokenizer (not real tokenization)**
+```swift
+// ❌ WRONG: Random hash values
+func encode(_ text: String) -> [Int] {
+    return words.map { abs($0.hashValue % vocabSize) }  // Random!
+}
+```
+
+**Bug 2: Decoding individual tokens**
+```swift
+// ❌ WRONG: Returns subword pieces
+return topScores.map { tokenizer.decode([$0.index]) }
+// Result: ["▁", "h", "l"] - meaningless pieces
+```
+
+**The Fix**:
+1. Use real SentencePiece library (not hash-based)
+2. Decode full sequences (input + predicted token)
+3. Extract only the new word added
+
+```swift
+// ✅ CORRECT: Decode full sequence
+let fullSequence = tokenIds + [nextTokenId]
+let decodedText = tokenizer.decode(fullSequence)
+let newWord = extractNewPart(from: decodedText, after: originalText)
+// Result: ["ございます", "ございました", "ね"] - actual words!
+```
+
+---
+
 Complete guide for integrating the KeyboardAI Core ML model into your iOS keyboard extension.
 
 **Why Core ML?**
@@ -13,6 +75,45 @@ Complete guide for integrating the KeyboardAI Core ML model into your iOS keyboa
 ---
 
 ## Complete End-to-End Workflow
+
+## Quick Checklist
+
+Use this checklist to track your integration progress:
+
+**Before You Start**:
+- [ ] Ran `./build-package-complete.sh` to generate model files
+- [ ] Have `KeyboardAI.mlpackage`, `tokenizer.model`, `tokenizer.vocab`
+- [ ] Have Xcode 14+ installed
+- [ ] Have keyboard extension project created
+
+**Step 1: Setup**:
+- [ ] Created Podfile in your project
+- [ ] Added `pod 'sentencepiece-swift'` to Podfile
+- [ ] Ran `pod install`
+- [ ] Opened `.xcworkspace` file (not `.xcodeproj`)
+
+**Step 2: Add Files**:
+- [ ] Dragged `KeyboardAI.mlpackage` into Xcode
+- [ ] Dragged `tokenizer.model` into Xcode
+- [ ] Dragged `tokenizer.vocab` into Xcode
+- [ ] Dragged `model_info.json` into Xcode
+- [ ] Checked "Copy items if needed"
+- [ ] Added all files to keyboard extension target
+
+**Step 3: Verify**:
+- [ ] Files appear in Build Phases → Copy Bundle Resources
+- [ ] Target Membership shows keyboard extension checked
+- [ ] Clean build folder (⇧⌘K)
+- [ ] Build succeeds (⌘B)
+
+**Step 4: Code**:
+- [ ] Created `Tokenizer.swift` with SentencePiece
+- [ ] Created `KeyboardAIModel.swift` with fixed prediction
+- [ ] Integrated into keyboard view controller
+- [ ] Tested on simulator
+- [ ] Tested on device
+
+---
 
 ### Overview
 
@@ -231,7 +332,7 @@ class KeyboardAIModel {
     }
     
     func predict(text: String, topK: Int = 5) -> [String] {
-        // Tokenize input
+        // Tokenize input text
         let tokenIds = tokenizer.encode(text)
         guard !tokenIds.isEmpty else { return [] }
         
@@ -258,78 +359,123 @@ class KeyboardAIModel {
             return []
         }
         
-        // Get logits from output
+        // Get logits for the last token position
         let logits = output.logits
         
-        // Extract last token's predictions
-        let lastTokenStart = (paddedInput.count - 1) * vocabSize
+        // Extract last token's predictions (shape: [1, 50, vocab_size])
+        // We want predictions at position [0, 49, :]
+        let lastTokenStart = 49 * vocabSize
         var scores: [(index: Int, score: Float)] = []
         
-        for i in 0..<vocabSize {
+        for i in 0..<min(vocabSize, 1000) {  // Limit to top 1000 for performance
             let score = logits[lastTokenStart + i].floatValue
             scores.append((index: i, score: score))
         }
         
-        // Get top-K
-        let topScores = scores.sorted { $0.score > $1.score }.prefix(topK)
+        // Get top-K token IDs
+        let topTokenIds = scores.sorted { $0.score > $1.score }
+            .prefix(topK * 3)  // Get more candidates
+            .map { $0.index }
         
-        // Convert to words
-        return topScores.map { tokenizer.decode([$0.index]) }
+        // CRITICAL FIX: Decode each predicted token by appending to input
+        var suggestions: [String] = []
+        let originalText = text
+        
+        for nextTokenId in topTokenIds {
+            // Create sequence: input + predicted token
+            let fullSequence = tokenIds + [nextTokenId]
+            
+            // Decode the full sequence
+            let decodedText = tokenizer.decode(fullSequence)
+            
+            // Extract only the NEW part (what was added)
+            if decodedText.hasPrefix(originalText) {
+                let newPart = String(decodedText.dropFirst(originalText.count)).trimmingCharacters(in: .whitespaces)
+                if !newPart.isEmpty && !suggestions.contains(newPart) {
+                    suggestions.append(newPart)
+                    if suggestions.count >= topK {
+                        break
+                    }
+                }
+            }
+        }
+        
+        return suggestions
     }
+}
 }
 ```
 
 ### 3.2 Create Tokenizer.swift
 
+**IMPORTANT**: You need to add SentencePiece library to iOS.
+
+**Add to Podfile**:
+```ruby
+pod 'sentencepiece-swift'
+```
+
+Then run: `pod install`
+
+**Tokenizer.swift**:
 ```swift
 import Foundation
+import sentencepiece_swift
 
 class Tokenizer {
-    private var vocabMap: [String: Int] = [:]
-    private var reverseVocabMap: [Int: String] = [:]
+    private let processor: SentencePieceProcessor
     let vocabSize: Int
     
     init?() {
-        // Load vocabulary
-        guard let vocabPath = Bundle.main.path(forResource: "tokenizer", ofType: "vocab") else {
-            print("Tokenizer vocab not found")
+        // Load SentencePiece model
+        guard let modelPath = Bundle.main.path(forResource: "tokenizer", ofType: "model") else {
+            print("Tokenizer model not found")
             return nil
         }
         
-        do {
-            let vocabContent = try String(contentsOfFile: vocabPath, encoding: .utf8)
-            let lines = vocabContent.components(separatedBy: .newlines)
-            
-            for (index, line) in lines.enumerated() {
-                let parts = line.components(separatedBy: "\t")
-                if parts.count >= 1 {
-                    let token = parts[0]
-                    vocabMap[token] = index
-                    reverseVocabMap[index] = token
-                }
-            }
-            
-            vocabSize = vocabMap.count
-        } catch {
-            print("Error loading vocab: \(error)")
+        guard let processor = try? SentencePieceProcessor(modelPath: modelPath) else {
+            print("Failed to load SentencePiece processor")
             return nil
         }
+        
+        self.processor = processor
+        self.vocabSize = Int(processor.vocabSize())
     }
     
     func encode(_ text: String) -> [Int] {
-        // Simplified tokenization
-        // In production, use SentencePiece library or implement BPE
-        let words = text.lowercased().components(separatedBy: .whitespaces)
-        return words.compactMap { word in
-            // Simple hash-based encoding (replace with proper SentencePiece)
-            abs(word.hashValue % vocabSize)
-        }
+        // Encode text to token IDs
+        return processor.encode(text).map { Int($0) }
     }
     
     func decode(_ ids: [Int]) -> String {
-        // Simplified decoding
-        return ids.compactMap { reverseVocabMap[$0] }.joined(separator: " ")
+        // Decode token IDs back to text
+        let ids32 = ids.map { Int32($0) }
+        return processor.decode(ids32)
     }
+    
+    func encodePieces(_ text: String) -> [String] {
+        // Encode to pieces (for debugging)
+        return processor.encodePieces(text)
+    }
+}
+```
+
+**Why This Fixes the Issue**:
+
+**Before** (hash-based):
+```swift
+// ❌ Wrong: Returns random hash values
+func encode(_ text: String) -> [Int] {
+    let words = text.components(separatedBy: .whitespaces)
+    return words.map { abs($0.hashValue % vocabSize) }  // Random!
+}
+```
+
+**After** (SentencePiece):
+```swift
+// ✅ Correct: Uses trained tokenizer
+func encode(_ text: String) -> [Int] {
+    return processor.encode(text).map { Int($0) }  // Proper tokenization
 }
 ```
 
@@ -594,6 +740,50 @@ if let bundlePath = Bundle.main.resourcePath {
 - Check "Copy items if needed"
 - Add to keyboard extension target
 - Clean and rebuild
+
+---
+
+### SentencePiece Pod Not Found
+
+**Error**: `Unable to find a specification for 'sentencepiece-swift'`
+
+**Cause**: The pod name might be different or you need to update CocoaPods
+
+**Solutions**:
+
+**1. Update CocoaPods**:
+```bash
+sudo gem install cocoapods
+pod repo update
+```
+
+**2. Try alternative pod names**:
+```ruby
+# Try these alternatives in Podfile
+pod 'sentencepiece-swift'
+# OR
+pod 'SentencePiece'
+# OR
+pod 'SwiftSentencePiece'
+```
+
+**3. Manual installation** (if pod not available):
+
+Download SentencePiece C++ library and create Swift wrapper:
+```bash
+# Install via Homebrew
+brew install sentencepiece
+
+# Then add to Xcode:
+# - Link against libsentencepiece.dylib
+# - Create Swift bridging header
+# - Wrap C++ API in Swift
+```
+
+**4. Alternative: Use Python bridge** (temporary solution):
+- Keep tokenization on server/Python side
+- Send token IDs to iOS
+- Only run Core ML model on device
 
 ---
 

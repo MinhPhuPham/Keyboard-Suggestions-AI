@@ -1,22 +1,22 @@
 # Model Configuration
 model:
-  embedding_dim: 64
-  hidden_dim: 128
+  embedding_dim: 128  # Increased from 64 for better Japanese representation
+  hidden_dim: 256  # Increased from 128
   num_layers: 1
   dropout: 0.2
-  vocab_size: 100  # Must match tokenizer vocab size
+  vocab_size: 32000  # Increased for Japanese (was 100)
 
 # Tokenizer Configuration
 tokenizer:
   type: "sentencepiece"
-  model_type: "unigram"
-  vocab_size: 25000
-  character_coverage: 1.0
+  model_type: "unigram"  # Better for Japanese than BPE
+  vocab_size: 32000  # Increased for Japanese coverage
+  character_coverage: 0.9995  # High coverage for Japanese chars
   normalization_rule_name: "nmt_nfkc"
   
 # Training Configuration
 training:
-  batch_size: 128
+  batch_size: 64  # Reduced from 128 for larger model
   learning_rate: 0.001
   num_epochs: 50
   early_stopping_patience: 5
@@ -33,7 +33,7 @@ data:
 optimization:
   quantization: "int8"
   export_format: "onnx"
-  target_model_size_mb: 5
+  target_model_size_mb: 10  # Increased from 5 for larger model
   
 # Inference Configuration
 inference:

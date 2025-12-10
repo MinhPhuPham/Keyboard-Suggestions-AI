@@ -1,11 +1,12 @@
 # Keyboard Suggestions AI
 
-Tiny (<5MB), offline, multilingual next-word prediction engine for mobile keyboards.
+AI-powered next-word prediction for mobile keyboards with Japanese support.
 
 ## Features
 
-- **Multilingual**: English + Japanese support
-- **Tiny Model**: <1MB TinyLSTM with SentencePiece tokenizer
+- **Japanese Support**: Trained on 1M+ Japanese words from Mozc dictionary
+- **Large Vocabulary**: 32,000 tokens for comprehensive Japanese coverage
+- **Compact Model**: 25MB Core ML model (FP16 precision)
 - **Custom Dictionary**: Hot-reload user abbreviations (<50ms)
 - **Language Rules**: Configurable formality, slang, emoji frequency
 - **No-Mean Filter**: Blocks spam and keyboard mashing
@@ -27,28 +28,43 @@ cd Keyboard-Suggestions-AI
 pip install -r requirements.txt
 ```
 
-**Note**: Mobile export tools (coremltools, tensorflow) require Python 3.9-3.12. The core training works with Python 3.13.
+**Note**: Core ML export requires Python 3.9-3.12. Create separate environment:
+```bash
+python3.11 -m venv .venv-coreml
+source .venv-coreml/bin/activate
+pip install coremltools torch sentencepiece pyyaml
+```
 
 ### 2. Train Model
 
 ```bash
-# Prepare data (creates demo samples)
-python src/utils/data_prep.py
+# Extract Japanese training data (100K sentences from 1M+ words)
+python scripts/extract_japanese_data.py --num-sentences 100000
 
-# Train tokenizer
-python src/tokenizer/train_tokenizer.py
+# Train tokenizer (32K vocab)
+python -c "
+from src.tokenizer.train_tokenizer import TokenizerTrainer
+trainer = TokenizerTrainer()
+trainer.train(
+    input_files=['data/processed/japanese_train_large.txt'],
+    vocab_size=32000,
+    character_coverage=0.9995,
+    model_type='unigram'
+)
+"
 
 # Train model
-python src/model/train.py
+python src/model/train.py --epochs 50
 
-# Export for mobile
-python src/utils/export_model.py
+# Export to Core ML
+source .venv-coreml/bin/activate
+python scripts/export_coreml.py --model models/best_model.pt
 ```
 
 **Output**:
-- `models/tokenizer.model` (~237 KB)
-- `models/best_model.pt` (trained model)
-- `models/mobile/tiny_lstm.pt` (~473 KB TorchScript)
+- `models/tokenizer.model` (~788 KB, 32K vocab)
+- `models/best_model.pt` (trained model, ~146 MB)
+- `ios/KeyboardAI/KeyboardAI.mlpackage` (~25 MB Core ML)
 
 ### 3. Test Predictions
 
@@ -70,21 +86,22 @@ Build everything from scratch to iOS/Android packages in one command:
 
 **What it does**:
 1. ✅ Installs dependencies
-2. ✅ Prepares training data
-3. ✅ Trains tokenizer
+2. ✅ Extracts Japanese training data (100K sentences)
+3. ✅ Trains tokenizer (32K vocab)
 4. ✅ Trains model (50 epochs)
-5. ✅ Exports to TorchScript
-6. ✅ Creates iOS package
-7. ✅ Creates Android package
+5. ✅ Exports to Core ML
+6. ✅ Copies tokenizer to iOS package
+7. ✅ Creates iOS/Android packages
 
 **Output**:
-- `ios/KeyboardAI-iOS-Package.zip` (~572 KB)
-- `android/KeyboardAI-Android-Package.zip` (~572 KB)
+- `ios/KeyboardAI/KeyboardAI.mlpackage` (~25 MB)
+- `ios/KeyboardAI/tokenizer.model` (~788 KB)
+- `ios/KeyboardAI/tokenizer.vocab` (~581 KB)
 
 ### Quick Build Options
 
 ```bash
-# Quick test build (5 epochs, ~4 seconds)
+# Quick test build (5 epochs, ~1 minute)
 ./build-package-complete.sh --quick
 
 # Skip dependency installation
@@ -102,10 +119,10 @@ Build everything from scratch to iOS/Android packages in one command:
 
 ### Package Contents
 
-Each package includes:
-- `tiny_lstm.pt` - TorchScript model (~512 KB)
-- `tokenizer.model` - SentencePiece tokenizer (~256 KB)
-- `tokenizer.vocab` - Vocabulary file
+iOS package includes:
+- `KeyboardAI.mlpackage` - Core ML model (~25 MB)
+- `tokenizer.model` - SentencePiece tokenizer (~788 KB)
+- `tokenizer.vocab` - Vocabulary file (~581 KB)
 - `language_rules.yaml` - EN/JA language rules
 - `custom_dictionary.json` - Custom abbreviations
 - `model_info.json` - Model metadata
@@ -141,13 +158,30 @@ Each package includes:
 
 ## Training Your Own Model
 
-### Collect Training Data
+### Japanese Data (Included!)
+
+The project includes Japanese dictionary data from Mozc:
+
+```bash
+# Extract training data from included dictionaries
+python scripts/extract_japanese_data.py --num-sentences 100000
+```
+
+**What it extracts**:
+- 1,033,624 unique words from `data/dictionary_oss/`
+- 6,465 kanji mappings from `data/single_kanji/`
+- 439 emoticons from `data/emoticon/`
+- 1,909 emoji mappings from `data/emoji/`
+
+**Output**: 100,000 natural Japanese sentences in `data/processed/japanese_train_large.txt`
+
+### Collect Additional Data
 
 See [`DATA_COLLECTION_GUIDE.md`](DATA_COLLECTION_GUIDE.md) for detailed instructions.
 
 **Minimum Requirements**:
 - English: 1,000+ sentences
-- Japanese: 1,000+ sentences  
+- Japanese: Already included! (100K sentences)
 - Format: One sentence per line, UTF-8
 
 **Example**:
@@ -157,24 +191,24 @@ I'm going to the store
 wanna grab coffee?
 that's so cool!
 ...
-
-data/raw/japanese_polite.txt:
-ありがとうございます
-お疲れ様です
-...
 ```
 
 ### Clean & Train
 
 ```bash
-# Clean your data
-python scripts/clean_data.py
+# Extract Japanese data
+python scripts/extract_japanese_data.py
 
-# Validate quality
-python scripts/validate_dataset.py
-
-# Train tokenizer (adjust vocab size in config)
-python src/tokenizer/train_tokenizer.py
+# Train tokenizer with large vocab
+python -c "
+from src.tokenizer.train_tokenizer import TokenizerTrainer
+trainer = TokenizerTrainer()
+trainer.train(
+    input_files=['data/processed/japanese_train_large.txt'],
+    vocab_size=32000,
+    character_coverage=0.9995
+)
+"
 
 # Train model
 python src/model/train.py --epochs 50
