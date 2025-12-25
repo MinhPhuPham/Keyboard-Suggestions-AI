@@ -1,0 +1,868 @@
+{
+  "total_tests": 32,
+  "passed": 31,
+  "failed": 1,
+  "success_rate": 96.875,
+  "categories": [
+    {
+      "name": "Complex Homonyms - Multiple Kanji Same Reading",
+      "passed": 4,
+      "failed": 0,
+      "total": 4,
+      "percentage": 100.0,
+      "details": [
+        {
+          "input": "かみ",
+          "passed": true,
+          "context_results": {
+            "total": 3,
+            "passed": 0,
+            "contexts": [
+              {
+                "context": "preceding_text: 'お祈りをして'",
+                "status": "FAIL",
+                "expected": "神",
+                "got": [
+                  "かみ"
+                ]
+              },
+              {
+                "context": "preceding_text: '印刷する'",
+                "status": "FAIL",
+                "expected": "紙",
+                "got": [
+                  "かみ"
+                ]
+              },
+              {
+                "context": "preceding_text: '美容院で'",
+                "status": "FAIL",
+                "expected": "髪",
+                "got": [
+                  "かみ"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "input": "はし",
+          "passed": true,
+          "context_results": {
+            "total": 3,
+            "passed": 0,
+            "contexts": [
+              {
+                "context": "preceding_text: '川に'",
+                "status": "FAIL",
+                "expected": "橋",
+                "got": [
+                  "はし"
+                ]
+              },
+              {
+                "context": "preceding_text: '食事で'",
+                "status": "FAIL",
+                "expected": "箸",
+                "got": [
+                  "はし"
+                ]
+              },
+              {
+                "context": "preceding_text: 'テーブルの'",
+                "status": "FAIL",
+                "expected": "端",
+                "got": [
+                  "はし"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "input": "あめ",
+          "passed": true,
+          "context_results": {
+            "total": 2,
+            "passed": 2,
+            "contexts": [
+              {
+                "context": "preceding_text: '今日は'",
+                "status": "PASS"
+              },
+              {
+                "context": "preceding_text: '子供に'",
+                "status": "PASS"
+              }
+            ]
+          }
+        },
+        {
+          "input": "こう",
+          "passed": true,
+          "context_results": {
+            "total": 3,
+            "passed": 0,
+            "contexts": [
+              {
+                "context": "preceding_text: '学'",
+                "status": "FAIL",
+                "expected": "校",
+                "got": [
+                  "こう"
+                ]
+              },
+              {
+                "context": "preceding_text: '小中'",
+                "status": "FAIL",
+                "expected": "高",
+                "got": [
+                  "こう"
+                ]
+              },
+              {
+                "context": "preceding_text: '思'",
+                "status": "FAIL",
+                "expected": "考",
+                "got": [
+                  "こう"
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Verbs with Multiple Kanji - Nuanced Meanings",
+      "passed": 4,
+      "failed": 0,
+      "total": 4,
+      "percentage": 100.0,
+      "details": [
+        {
+          "input": "きく",
+          "passed": true,
+          "context_results": {
+            "total": 4,
+            "passed": 0,
+            "contexts": [
+              {
+                "context": "preceding_text: '音楽を'",
+                "status": "FAIL",
+                "expected": "聴く",
+                "got": [
+                  "きく"
+                ]
+              },
+              {
+                "context": "preceding_text: '話を'",
+                "status": "FAIL",
+                "expected": "聞く",
+                "got": [
+                  "きく"
+                ]
+              },
+              {
+                "context": "preceding_text: '質問を'",
+                "status": "FAIL",
+                "expected": "訊く",
+                "got": [
+                  "きく"
+                ]
+              },
+              {
+                "context": "preceding_text: '薬が'",
+                "status": "FAIL",
+                "expected": "効く",
+                "got": [
+                  "きく"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "input": "みる",
+          "passed": true,
+          "context_results": {
+            "total": 4,
+            "passed": 0,
+            "contexts": [
+              {
+                "context": "preceding_text: '映画を'",
+                "status": "FAIL",
+                "expected": "観る",
+                "got": [
+                  "みる"
+                ]
+              },
+              {
+                "context": "preceding_text: '景色を'",
+                "status": "FAIL",
+                "expected": "見る",
+                "got": [
+                  "みる"
+                ]
+              },
+              {
+                "context": "preceding_text: '患者を'",
+                "status": "FAIL",
+                "expected": "診る",
+                "got": [
+                  "みる"
+                ]
+              },
+              {
+                "context": "preceding_text: '病人を'",
+                "status": "FAIL",
+                "expected": "看る",
+                "got": [
+                  "みる"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "input": "あける",
+          "passed": true,
+          "context_results": {
+            "total": 3,
+            "passed": 0,
+            "contexts": [
+              {
+                "context": "preceding_text: 'ドアを'",
+                "status": "FAIL",
+                "expected": "開ける",
+                "got": [
+                  "あける"
+                ]
+              },
+              {
+                "context": "preceding_text: '席を'",
+                "status": "FAIL",
+                "expected": "空ける",
+                "got": [
+                  "あける"
+                ]
+              },
+              {
+                "context": "preceding_text: '夜が'",
+                "status": "FAIL",
+                "expected": "明ける",
+                "got": [
+                  "あける"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "input": "はかる",
+          "passed": true,
+          "context_results": {
+            "total": 4,
+            "passed": 0,
+            "contexts": [
+              {
+                "context": "preceding_text: '長さを'",
+                "status": "FAIL",
+                "expected": "測る",
+                "got": [
+                  "はかる"
+                ]
+              },
+              {
+                "context": "preceding_text: '体重を'",
+                "status": "FAIL",
+                "expected": "量る",
+                "got": [
+                  "はかる"
+                ]
+              },
+              {
+                "context": "preceding_text: '時間を'",
+                "status": "FAIL",
+                "expected": "計る",
+                "got": [
+                  "はかる"
+                ]
+              },
+              {
+                "context": "preceding_text: '暗殺を'",
+                "status": "FAIL",
+                "expected": "図る",
+                "got": [
+                  "はかる"
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Adjectives with Subtle Differences",
+      "passed": 3,
+      "failed": 0,
+      "total": 3,
+      "percentage": 100.0,
+      "details": [
+        {
+          "input": "あつい",
+          "passed": true,
+          "context_results": {
+            "total": 3,
+            "passed": 0,
+            "contexts": [
+              {
+                "context": "preceding_text: '夏は'",
+                "status": "FAIL",
+                "expected": "暑い",
+                "got": [
+                  "あつい"
+                ]
+              },
+              {
+                "context": "preceding_text: 'お湯が'",
+                "status": "FAIL",
+                "expected": "熱い",
+                "got": [
+                  "あつい"
+                ]
+              },
+              {
+                "context": "preceding_text: '本が'",
+                "status": "FAIL",
+                "expected": "厚い",
+                "got": [
+                  "あつい"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "input": "はやい",
+          "passed": true,
+          "context_results": {
+            "total": 2,
+            "passed": 0,
+            "contexts": [
+              {
+                "context": "preceding_text: '朝'",
+                "status": "FAIL",
+                "expected": "早い",
+                "got": [
+                  "はやい"
+                ]
+              },
+              {
+                "context": "preceding_text: '新幹線は'",
+                "status": "FAIL",
+                "expected": "速い",
+                "got": [
+                  "はやい"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "input": "かわいい",
+          "passed": true,
+          "context_results": {
+            "total": 0,
+            "passed": 0,
+            "contexts": []
+          }
+        }
+      ]
+    },
+    {
+      "name": "Compound Word Prediction",
+      "passed": 4,
+      "failed": 0,
+      "total": 4,
+      "percentage": 100.0,
+      "details": [
+        {
+          "input": "がく",
+          "passed": true,
+          "context_results": {
+            "total": 0,
+            "passed": 0,
+            "contexts": []
+          }
+        },
+        {
+          "input": "がっ",
+          "passed": true,
+          "context_results": {
+            "total": 0,
+            "passed": 0,
+            "contexts": []
+          }
+        },
+        {
+          "input": "とう",
+          "passed": true,
+          "context_results": {
+            "total": 1,
+            "passed": 0,
+            "contexts": [
+              {
+                "context": "preceding_text: '新幹線で'",
+                "status": "FAIL",
+                "expected": "東京",
+                "got": [
+                  "とう"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "input": "でん",
+          "passed": true,
+          "context_results": {
+            "total": 0,
+            "passed": 0,
+            "contexts": []
+          }
+        }
+      ]
+    },
+    {
+      "name": "Proper Nouns and Names",
+      "passed": 3,
+      "failed": 0,
+      "total": 3,
+      "percentage": 100.0,
+      "details": [
+        {
+          "input": "とうきょう",
+          "passed": true,
+          "context_results": {
+            "total": 0,
+            "passed": 0,
+            "contexts": []
+          }
+        },
+        {
+          "input": "さとう",
+          "passed": true,
+          "context_results": {
+            "total": 2,
+            "passed": 0,
+            "contexts": [
+              {
+                "context": "preceding_text: '田中さんと'",
+                "status": "FAIL",
+                "expected": "佐藤",
+                "got": [
+                  "さとう"
+                ]
+              },
+              {
+                "context": "preceding_text: 'コーヒーに'",
+                "status": "FAIL",
+                "expected": "砂糖",
+                "got": [
+                  "さとう"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "input": "たなか",
+          "passed": true,
+          "context_results": {
+            "total": 0,
+            "passed": 0,
+            "contexts": []
+          }
+        }
+      ]
+    },
+    {
+      "name": "Similar Meanings - Different Nuance",
+      "passed": 3,
+      "failed": 0,
+      "total": 3,
+      "percentage": 100.0,
+      "details": [
+        {
+          "input": "まち",
+          "passed": true,
+          "context_results": {
+            "total": 2,
+            "passed": 0,
+            "contexts": [
+              {
+                "context": "preceding_text: '小さな'",
+                "status": "FAIL",
+                "expected": "町",
+                "got": [
+                  "まち"
+                ]
+              },
+              {
+                "context": "preceding_text: '賑やかな'",
+                "status": "FAIL",
+                "expected": "街",
+                "got": [
+                  "まち"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "input": "かなしい",
+          "passed": true,
+          "context_results": {
+            "total": 2,
+            "passed": 0,
+            "contexts": [
+              {
+                "context": "genre: 'casual_conversation'",
+                "status": "FAIL",
+                "expected": "悲しい",
+                "got": [
+                  "かなしい"
+                ]
+              },
+              {
+                "context": "genre: 'literary_writing'",
+                "status": "FAIL",
+                "expected": "哀しい",
+                "got": [
+                  "かなしい"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "input": "うまれる",
+          "passed": true,
+          "context_results": {
+            "total": 2,
+            "passed": 0,
+            "contexts": [
+              {
+                "context": "preceding_text: '1990年に'",
+                "status": "FAIL",
+                "expected": "生まれる",
+                "got": [
+                  "うまれる"
+                ]
+              },
+              {
+                "context": "preceding_text: '赤ちゃんが'",
+                "status": "FAIL",
+                "expected": "産まれる",
+                "got": [
+                  "うまれる"
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Technical and Scientific Terms",
+      "passed": 2,
+      "failed": 0,
+      "total": 2,
+      "percentage": 100.0,
+      "details": [
+        {
+          "input": "かがく",
+          "passed": true,
+          "context_results": {
+            "total": 2,
+            "passed": 0,
+            "contexts": [
+              {
+                "context": "preceding_text: '実験で'",
+                "status": "FAIL",
+                "expected": "化学",
+                "got": [
+                  "かがく"
+                ]
+              },
+              {
+                "context": "preceding_text: '研究'",
+                "status": "FAIL",
+                "expected": "科学",
+                "got": [
+                  "かがく"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "input": "こうせい",
+          "passed": true,
+          "context_results": {
+            "total": 3,
+            "passed": 0,
+            "contexts": [
+              {
+                "context": "preceding_text: '原稿の'",
+                "status": "FAIL",
+                "expected": "校正",
+                "got": [
+                  "こうせい"
+                ]
+              },
+              {
+                "context": "preceding_text: '裁判の'",
+                "status": "FAIL",
+                "expected": "公正",
+                "got": [
+                  "こうせい"
+                ]
+              },
+              {
+                "context": "preceding_text: '文章の'",
+                "status": "FAIL",
+                "expected": "構成",
+                "got": [
+                  "こうせい"
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Frequency-Based Learning Scenarios",
+      "passed": 4,
+      "failed": 0,
+      "total": 4,
+      "percentage": 100.0,
+      "details": [
+        {
+          "input": "かい",
+          "passed": true,
+          "context_results": {
+            "total": 0,
+            "passed": 0,
+            "contexts": []
+          }
+        },
+        {
+          "input": "かい",
+          "passed": true,
+          "context_results": {
+            "total": 0,
+            "passed": 0,
+            "contexts": []
+          }
+        },
+        {
+          "input": "かい",
+          "passed": true,
+          "context_results": {
+            "total": 0,
+            "passed": 0,
+            "contexts": []
+          }
+        },
+        {
+          "input": "かい",
+          "passed": true,
+          "context_results": {
+            "total": 0,
+            "passed": 0,
+            "contexts": []
+          }
+        }
+      ]
+    },
+    {
+      "name": "Multi-Character Context Prediction",
+      "passed": 1,
+      "failed": 1,
+      "total": 2,
+      "percentage": 50.0,
+      "details": [
+        {
+          "input": "せい",
+          "passed": true,
+          "context_results": {
+            "total": 4,
+            "passed": 0,
+            "contexts": [
+              {
+                "context": "preceding_text: '学'",
+                "status": "FAIL",
+                "expected": "生",
+                "got": [
+                  "せい"
+                ]
+              },
+              {
+                "context": "preceding_text: '男'",
+                "status": "FAIL",
+                "expected": "性",
+                "got": [
+                  "せい"
+                ]
+              },
+              {
+                "context": "preceding_text: '完'",
+                "status": "FAIL",
+                "expected": "成",
+                "got": [
+                  "せい"
+                ]
+              },
+              {
+                "context": "following_text: '府'",
+                "status": "FAIL",
+                "expected": "政",
+                "got": [
+                  "せい"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "input": "し",
+          "passed": false,
+          "context_results": {
+            "total": 2,
+            "passed": 0,
+            "contexts": [
+              {
+                "context": "preceding_text: '都'",
+                "status": "FAIL",
+                "expected": "市",
+                "got": [
+                  "仕事",
+                  "しごと",
+                  "失礼します"
+                ]
+              },
+              {
+                "context": "preceding_text: '教'",
+                "status": "FAIL",
+                "expected": "師",
+                "got": [
+                  "仕事",
+                  "しごと",
+                  "失礼します"
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Difficult Edge Cases",
+      "passed": 3,
+      "failed": 0,
+      "total": 3,
+      "percentage": 100.0,
+      "details": [
+        {
+          "input": "きょう",
+          "passed": true,
+          "context_results": {
+            "total": 3,
+            "passed": 0,
+            "contexts": [
+              {
+                "context": "sentence_start: true",
+                "status": "FAIL",
+                "expected": "今日",
+                "got": [
+                  "きょう"
+                ]
+              },
+              {
+                "context": "preceding_text: '東'",
+                "status": "FAIL",
+                "expected": "京",
+                "got": [
+                  "きょう"
+                ]
+              },
+              {
+                "context": "following_text: '室'",
+                "status": "FAIL",
+                "expected": "教",
+                "got": [
+                  "きょう"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "input": "じ",
+          "passed": true,
+          "context_results": {
+            "total": 2,
+            "passed": 0,
+            "contexts": [
+              {
+                "context": "preceding_text: '3'",
+                "status": "FAIL",
+                "expected": "時",
+                "got": [
+                  "じ"
+                ]
+              },
+              {
+                "context": "preceding_text: '漢'",
+                "status": "FAIL",
+                "expected": "字",
+                "got": [
+                  "じ"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "input": "かいとう",
+          "passed": true,
+          "context_results": {
+            "total": 2,
+            "passed": 0,
+            "contexts": [
+              {
+                "context": "preceding_text: 'アンケート'",
+                "status": "FAIL",
+                "expected": "回答",
+                "got": [
+                  "かいとう"
+                ]
+              },
+              {
+                "context": "preceding_text: 'テストの'",
+                "status": "FAIL",
+                "expected": "解答",
+                "got": [
+                  "かいとう"
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

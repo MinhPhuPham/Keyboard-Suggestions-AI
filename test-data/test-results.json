@@ -1,0 +1,627 @@
+{
+  "total_passed": 14,
+  "total_tests": 41,
+  "success_rate": 34.146341463414636,
+  "category_results": [
+    {
+      "name": "Basic Hiragana Conversion",
+      "passed": 3,
+      "total": 3,
+      "percentage": 100.0
+    },
+    {
+      "name": "Common Words - Hiragana to Kanji",
+      "passed": 0,
+      "total": 8,
+      "percentage": 0.0
+    },
+    {
+      "name": "Katakana Words (Foreign/Loanwords)",
+      "passed": 0,
+      "total": 5,
+      "percentage": 0.0
+    },
+    {
+      "name": "Phrases and Sentences",
+      "passed": 0,
+      "total": 4,
+      "percentage": 0.0
+    },
+    {
+      "name": "Special Characters and Small Kana",
+      "passed": 5,
+      "total": 5,
+      "percentage": 100.0
+    },
+    {
+      "name": "Homonyms (Same Reading, Different Kanji)",
+      "passed": 0,
+      "total": 3,
+      "percentage": 0.0
+    },
+    {
+      "name": "Symbols and Special Characters",
+      "passed": 0,
+      "total": 3,
+      "percentage": 0.0
+    },
+    {
+      "name": "Partial Input Suggestions",
+      "passed": 4,
+      "total": 4,
+      "percentage": 100.0
+    },
+    {
+      "name": "Long Vowels",
+      "passed": 2,
+      "total": 3,
+      "percentage": 66.66666666666666
+    },
+    {
+      "name": "Numbers and Dates",
+      "passed": 0,
+      "total": 3,
+      "percentage": 0.0
+    }
+  ],
+  "failed_tests": [
+    {
+      "input": "konnichiwa",
+      "expected": [
+        "こんにちは",
+        "今日は"
+      ],
+      "got": [
+        "o",
+        "t",
+        "e",
+        "s",
+        "n",
+        "a",
+        "h",
+        "i",
+        "l",
+        "g"
+      ],
+      "note": "Hello - most common stays as hiragana, but kanji option exists"
+    },
+    {
+      "input": "arigatou",
+      "expected": [
+        "ありがとう",
+        "有難う",
+        "有り難う"
+      ],
+      "got": [
+        "o",
+        "t",
+        "e",
+        "s",
+        "n",
+        "a",
+        "h",
+        "i",
+        "l",
+        "g"
+      ],
+      "note": "Thank you - multiple writing styles"
+    },
+    {
+      "input": "nihongo",
+      "expected": [
+        "日本語",
+        "にほんご"
+      ],
+      "got": [
+        "o",
+        "t",
+        "e",
+        "s",
+        "n",
+        "a",
+        "h",
+        "i",
+        "l",
+        "g"
+      ],
+      "note": "Japanese language - kanji preferred"
+    },
+    {
+      "input": "haru",
+      "expected": [
+        "春",
+        "張る",
+        "貼る",
+        "晴る",
+        "はる"
+      ],
+      "got": [
+        "o",
+        "t",
+        "e",
+        "s",
+        "n",
+        "a",
+        "i",
+        "h",
+        "l",
+        "g"
+      ],
+      "note": "Spring - multiple kanji with same reading"
+    },
+    {
+      "input": "sensei",
+      "expected": [
+        "先生",
+        "せんせい"
+      ],
+      "got": [
+        "o",
+        "t",
+        "e",
+        "s",
+        "n",
+        "a",
+        "h",
+        "i",
+        "l",
+        "g"
+      ],
+      "note": "Teacher"
+    },
+    {
+      "input": "gakkou",
+      "expected": [
+        "学校",
+        "がっこう"
+      ],
+      "got": [
+        "o",
+        "t",
+        "e",
+        "s",
+        "n",
+        "a",
+        "h",
+        "i",
+        "l",
+        "g"
+      ],
+      "note": "School"
+    },
+    {
+      "input": "tokyo",
+      "expected": [
+        "東京",
+        "とうきょう"
+      ],
+      "got": [
+        "o",
+        "t",
+        "e",
+        "s",
+        "n",
+        "a",
+        "i",
+        "h",
+        "l",
+        "g"
+      ],
+      "note": "Tokyo city name"
+    },
+    {
+      "input": "nihon",
+      "expected": [
+        "日本",
+        "にほん"
+      ],
+      "got": [
+        "o",
+        "t",
+        "e",
+        "s",
+        "n",
+        "a",
+        "i",
+        "h",
+        "l",
+        "g"
+      ],
+      "note": "Japan"
+    },
+    {
+      "input": "amerika",
+      "expected": [
+        "アメリカ",
+        "あめりか"
+      ],
+      "got": [
+        "o",
+        "t",
+        "e",
+        "s",
+        "n",
+        "a",
+        "h",
+        "i",
+        "l",
+        "g"
+      ],
+      "note": "America - typically written in katakana"
+    },
+    {
+      "input": "koohii",
+      "expected": [
+        "コーヒー",
+        "珈琲",
+        "こーひー"
+      ],
+      "got": [
+        "o",
+        "t",
+        "e",
+        "s",
+        "n",
+        "a",
+        "h",
+        "i",
+        "l",
+        "g"
+      ],
+      "note": "Coffee - katakana common, kanji rare"
+    },
+    {
+      "input": "anime",
+      "expected": [
+        "アニメ",
+        "あにめ"
+      ],
+      "got": [
+        "o",
+        "t",
+        "e",
+        "s",
+        "n",
+        "a",
+        "i",
+        "h",
+        "l",
+        "g"
+      ],
+      "note": "Anime"
+    },
+    {
+      "input": "sandoicchi",
+      "expected": [
+        "サンドイッチ",
+        "さんどいっち"
+      ],
+      "got": [
+        "o",
+        "t",
+        "e",
+        "s",
+        "n",
+        "a",
+        "h",
+        "i",
+        "l",
+        "g"
+      ],
+      "note": "Sandwich"
+    },
+    {
+      "input": "maikuru",
+      "expected": [
+        "マイケル",
+        "まいくる"
+      ],
+      "got": [
+        "o",
+        "t",
+        "e",
+        "s",
+        "n",
+        "a",
+        "h",
+        "i",
+        "l",
+        "g"
+      ],
+      "note": "Michael - foreign name"
+    },
+    {
+      "input": "ohayou",
+      "expected": [
+        "おはよう",
+        "お早う"
+      ],
+      "got": [
+        "o",
+        "t",
+        "e",
+        "s",
+        "n",
+        "a",
+        "h",
+        "i",
+        "l",
+        "g"
+      ],
+      "note": "Good morning"
+    },
+    {
+      "input": "sumimasen",
+      "expected": [
+        "すみません",
+        "済みません"
+      ],
+      "got": [
+        "o",
+        "t",
+        "e",
+        "s",
+        "n",
+        "a",
+        "h",
+        "i",
+        "l",
+        "g"
+      ],
+      "note": "Excuse me / Sorry"
+    },
+    {
+      "input": "watashi",
+      "expected": [
+        "私",
+        "わたし"
+      ],
+      "got": [
+        "o",
+        "t",
+        "e",
+        "s",
+        "n",
+        "a",
+        "h",
+        "i",
+        "l",
+        "g"
+      ],
+      "note": "I / Me"
+    },
+    {
+      "input": "benkyou",
+      "expected": [
+        "勉強",
+        "べんきょう"
+      ],
+      "got": [
+        "o",
+        "t",
+        "e",
+        "s",
+        "n",
+        "a",
+        "h",
+        "i",
+        "l",
+        "g"
+      ],
+      "note": "Study"
+    },
+    {
+      "input": "kami",
+      "expected": [
+        "神",
+        "紙",
+        "髪",
+        "上",
+        "かみ"
+      ],
+      "got": [
+        "o",
+        "t",
+        "e",
+        "s",
+        "n",
+        "a",
+        "i",
+        "h",
+        "l",
+        "g"
+      ],
+      "note": "God, paper, hair, above - context determines choice"
+    },
+    {
+      "input": "hashi",
+      "expected": [
+        "橋",
+        "箸",
+        "端",
+        "はし"
+      ],
+      "got": [
+        "o",
+        "t",
+        "e",
+        "s",
+        "n",
+        "a",
+        "i",
+        "h",
+        "l",
+        "g"
+      ],
+      "note": "Bridge, chopsticks, edge"
+    },
+    {
+      "input": "kou",
+      "expected": [
+        "工",
+        "公",
+        "校",
+        "高",
+        "こう"
+      ],
+      "got": [
+        "o",
+        "t",
+        "e",
+        "s",
+        "n",
+        "a",
+        "i",
+        "h",
+        "l",
+        "y"
+      ],
+      "note": "Many meanings: craft, public, school, high, etc."
+    },
+    {
+      "input": "yen",
+      "expected": [
+        "円",
+        "¥",
+        "えん"
+      ],
+      "got": [
+        "o",
+        "t",
+        "e",
+        "s",
+        "n",
+        "a",
+        "i",
+        "h",
+        "l",
+        "y"
+      ],
+      "note": "Yen symbol available in conversion"
+    },
+    {
+      "input": "hidari",
+      "expected": [
+        "左",
+        "←",
+        "ひだり"
+      ],
+      "got": [
+        "o",
+        "t",
+        "e",
+        "s",
+        "n",
+        "a",
+        "h",
+        "i",
+        "l",
+        "g"
+      ],
+      "note": "Left arrow symbol"
+    },
+    {
+      "input": "migi",
+      "expected": [
+        "右",
+        "→",
+        "みぎ"
+      ],
+      "got": [
+        "o",
+        "t",
+        "e",
+        "s",
+        "n",
+        "a",
+        "i",
+        "h",
+        "l",
+        "g"
+      ],
+      "note": "Right arrow symbol"
+    },
+    {
+      "input": "toukyou",
+      "expected": [
+        "東京",
+        "とうきょう"
+      ],
+      "got": [
+        "o",
+        "t",
+        "e",
+        "s",
+        "n",
+        "a",
+        "h",
+        "i",
+        "l",
+        "g"
+      ],
+      "note": "Tokyo with long vowels"
+    },
+    {
+      "input": "ichi",
+      "expected": [
+        "一",
+        "1",
+        "いち"
+      ],
+      "got": [
+        "o",
+        "t",
+        "e",
+        "s",
+        "n",
+        "a",
+        "i",
+        "h",
+        "l",
+        "g"
+      ],
+      "note": "One - kanji and numeral"
+    },
+    {
+      "input": "ni",
+      "expected": [
+        "二",
+        "2",
+        "に"
+      ],
+      "got": [
+        "o",
+        "t",
+        "e",
+        "s",
+        "n",
+        "a",
+        "i",
+        "h",
+        "l",
+        "y"
+      ],
+      "note": "Two"
+    },
+    {
+      "input": "kyou",
+      "expected": [
+        "今日",
+        "きょう"
+      ],
+      "got": [
+        "o",
+        "t",
+        "e",
+        "s",
+        "n",
+        "a",
+        "i",
+        "h",
+        "l",
+        "g"
+      ],
+      "note": "Today"
+    }
+  ]
+}

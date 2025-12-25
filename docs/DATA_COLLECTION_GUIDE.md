@@ -4,6 +4,52 @@
 
 This guide provides structured templates for collecting real training data for the Keyboard Suggestions AI. Follow these formats to ensure data quality and consistency.
 
+**Important**: Before collecting large datasets, **test with minimal data first** to ensure the model learns correctly. See [`TEST_ROADMAP.md`](TEST_ROADMAP.md) for testing strategy.
+
+---
+
+## Quick Start: Test Data (Start Here!)
+
+Before collecting thousands of sentences, **validate the model with minimal test data**.
+
+### Minimal Test Dataset (15 sentences)
+
+Create `data/test/minimal_train.txt`:
+
+```
+I am happy
+I am sad
+I am tired
+I love you
+I love pizza
+I love coding
+you are great
+you are awesome
+you are amazing
+thank you very much
+thank you so much
+how are you
+how are you doing
+what are you doing
+what do you think
+```
+
+**Purpose**: Verify model learns patterns:
+- "I am" → should predict `["happy", "sad", "tired"]`
+- "I love" → should predict `["you", "pizza", "coding"]`
+- "you are" → should predict `["great", "awesome", "amazing"]`
+
+**Expected Results**:
+- ✅ Different inputs → Different predictions
+- ✅ Predictions match training data
+- ✅ No crashes on unknown input
+
+**If this works**, scale to 100 → 1,000 → 10,000 sentences.
+
+**If this fails**, model architecture needs fixing before collecting more data.
+
+See [`TEST_ROADMAP.md`](TEST_ROADMAP.md) for complete testing guide.
+
 ---
 
 ## Data Requirements

@@ -1,4 +1,5 @@
 data:
+  language: japanese
   max_sequence_length: 50
   train_file: data/processed/comprehensive_train.txt
 model:
@@ -21,6 +22,6 @@ training:
   learning_rate: 0.001
   log_interval: 1000
   num_epochs: 30
-  save_dir: models
+  save_dir: models/japanese
   val_split: 0.05
   validation_split: 0.05

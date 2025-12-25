@@ -1,0 +1,111 @@
+{
+  "total_tests": 32,
+  "passed": 32,
+  "failed": 0,
+  "success_rate": 100.0,
+  "context_tests": 58,
+  "context_passed": 41,
+  "context_rate": 70.6896551724138,
+  "categories": [
+    {
+      "name": "Complex Homonyms - Multiple Kanji Same Reading",
+      "passed": 4,
+      "failed": 0,
+      "total": 4,
+      "percentage": 100.0,
+      "context_total": 11,
+      "context_passed": 9,
+      "context_percentage": 81.81818181818183
+    },
+    {
+      "name": "Verbs with Multiple Kanji - Nuanced Meanings",
+      "passed": 4,
+      "failed": 0,
+      "total": 4,
+      "percentage": 100.0,
+      "context_total": 15,
+      "context_passed": 5,
+      "context_percentage": 33.33333333333333
+    },
+    {
+      "name": "Adjectives with Subtle Differences",
+      "passed": 3,
+      "failed": 0,
+      "total": 3,
+      "percentage": 100.0,
+      "context_total": 5,
+      "context_passed": 4,
+      "context_percentage": 80.0
+    },
+    {
+      "name": "Compound Word Prediction",
+      "passed": 4,
+      "failed": 0,
+      "total": 4,
+      "percentage": 100.0,
+      "context_total": 1,
+      "context_passed": 0,
+      "context_percentage": 0.0
+    },
+    {
+      "name": "Proper Nouns and Names",
+      "passed": 3,
+      "failed": 0,
+      "total": 3,
+      "percentage": 100.0,
+      "context_total": 2,
+      "context_passed": 2,
+      "context_percentage": 100.0
+    },
+    {
+      "name": "Similar Meanings - Different Nuance",
+      "passed": 3,
+      "failed": 0,
+      "total": 3,
+      "percentage": 100.0,
+      "context_total": 6,
+      "context_passed": 5,
+      "context_percentage": 83.33333333333334
+    },
+    {
+      "name": "Technical and Scientific Terms",
+      "passed": 2,
+      "failed": 0,
+      "total": 2,
+      "percentage": 100.0,
+      "context_total": 5,
+      "context_passed": 5,
+      "context_percentage": 100.0
+    },
+    {
+      "name": "Frequency-Based Learning Scenarios",
+      "passed": 4,
+      "failed": 0,
+      "total": 4,
+      "percentage": 100.0,
+      "context_total": 0,
+      "context_passed": 0,
+      "context_percentage": 0
+    },
+    {
+      "name": "Multi-Character Context Prediction",
+      "passed": 2,
+      "failed": 0,
+      "total": 2,
+      "percentage": 100.0,
+      "context_total": 6,
+      "context_passed": 6,
+      "context_percentage": 100.0
+    },
+    {
+      "name": "Difficult Edge Cases",
+      "passed": 3,
+      "failed": 0,
+      "total": 3,
+      "percentage": 100.0,
+      "context_total": 7,
+      "context_passed": 5,
+      "context_percentage": 71.42857142857143
+    }
+  ]
+}

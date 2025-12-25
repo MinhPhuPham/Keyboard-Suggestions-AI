@@ -1,0 +1,711 @@
+{
+    "description": "Test cases for Japanese keyboard predictive text suggestions (hiragana input → word/phrase completion suggestions)",
+    "note": "These test cases simulate how Japanese IME suggests complete words and phrases as you type hiragana characters",
+    "test_cases": [
+        {
+            "category": "Common Greetings - Progressive Suggestions",
+            "tests": [
+                {
+                    "input": "こ",
+                    "expected_suggestions": [
+                        "この",
+                        "これ",
+                        "ここ",
+                        "子",
+                        "小",
+                        "こ"
+                    ],
+                    "note": "Single character shows common words starting with こ"
+                },
+                {
+                    "input": "こん",
+                    "expected_suggestions": [
+                        "こんにちは",
+                        "こんにちわ",
+                        "今日",
+                        "今",
+                        "こんな",
+                        "こんばんは",
+                        "混雑"
+                    ],
+                    "note": "Two characters - predictive suggests common greetings and words"
+                },
+                {
+                    "input": "こんに",
+                    "expected_suggestions": [
+                        "こんにちは",
+                        "こんにちわ",
+                        "今日",
+                        "今日は"
+                    ],
+                    "note": "More specific - greeting suggestions become primary"
+                },
+                {
+                    "input": "こんにち",
+                    "expected_suggestions": [
+                        "こんにちは",
+                        "今日",
+                        "今日は"
+                    ],
+                    "note": "Even more specific completion suggestions"
+                },
+                {
+                    "input": "こんばん",
+                    "expected_suggestions": [
+                        "こんばんは",
+                        "今晩",
+                        "今晩は"
+                    ],
+                    "note": "Good evening suggestions"
+                }
+            ]
+        },
+        {
+            "category": "Thank You Expressions",
+            "tests": [
+                {
+                    "input": "あ",
+                    "expected_suggestions": [
+                        "ある",
+                        "あの",
+                        "あなた",
+                        "ありがとう",
+                        "あります",
+                        "あ"
+                    ],
+                    "note": "Common words starting with あ"
+                },
+                {
+                    "input": "あり",
+                    "expected_suggestions": [
+                        "ありがとう",
+                        "ありがとうございます",
+                        "あります",
+                        "ありません",
+                        "有り",
+                        "蟻"
+                    ],
+                    "note": "Thank you expressions suggested"
+                },
+                {
+                    "input": "ありが",
+                    "expected_suggestions": [
+                        "ありがとう",
+                        "ありがとうございます",
+                        "ありがとうございました",
+                        "有難う"
+                    ],
+                    "note": "Various forms of thank you"
+                },
+                {
+                    "input": "ありがとう",
+                    "expected_suggestions": [
+                        "ありがとう",
+                        "ありがとうございます",
+                        "ありがとうございました",
+                        "有難う",
+                        "有り難う"
+                    ],
+                    "note": "Complete thank you with kanji variations"
+                }
+            ]
+        },
+        {
+            "category": "Common Daily Words",
+            "tests": [
+                {
+                    "input": "す",
+                    "expected_suggestions": [
+                        "する",
+                        "すみません",
+                        "すごい",
+                        "好き",
+                        "少し",
+                        "す"
+                    ],
+                    "note": "Common す words"
+                },
+                {
+                    "input": "すみ",
+                    "expected_suggestions": [
+                        "すみません",
+                        "住み",
+                        "隅",
+                        "墨"
+                    ],
+                    "note": "Excuse me / Sorry suggestion"
+                },
+                {
+                    "input": "すみま",
+                    "expected_suggestions": [
+                        "すみません",
+                        "済みません"
+                    ],
+                    "note": "Sorry/Excuse me completions"
+                },
+                {
+                    "input": "お",
+                    "expected_suggestions": [
+                        "お願い",
+                        "おはよう",
+                        "お疲れ様",
+                        "大きい",
+                        "多い",
+                        "お"
+                    ],
+                    "note": "Polite prefix and common words"
+                },
+                {
+                    "input": "おは",
+                    "expected_suggestions": [
+                        "おはよう",
+                        "おはようございます",
+                        "お早う"
+                    ],
+                    "note": "Good morning suggestions"
+                },
+                {
+                    "input": "おつ",
+                    "expected_suggestions": [
+                        "お疲れ様",
+                        "お疲れ様です",
+                        "お疲れさまでした"
+                    ],
+                    "note": "Good work / You must be tired"
+                }
+            ]
+        },
+        {
+            "category": "Question Words",
+            "tests": [
+                {
+                    "input": "な",
+                    "expected_suggestions": [
+                        "何",
+                        "なる",
+                        "ない",
+                        "など",
+                        "名前",
+                        "な"
+                    ],
+                    "note": "Common words starting with な"
+                },
+                {
+                    "input": "なに",
+                    "expected_suggestions": [
+                        "何",
+                        "何か",
+                        "何も"
+                    ],
+                    "note": "What - question word"
+                },
+                {
+                    "input": "だれ",
+                    "expected_suggestions": [
+                        "誰",
+                        "誰か",
+                        "誰も"
+                    ],
+                    "note": "Who - question word"
+                },
+                {
+                    "input": "どこ",
+                    "expected_suggestions": [
+                        "どこ",
+                        "何処",
+                        "どこか",
+                        "どこも"
+                    ],
+                    "note": "Where - question word"
+                },
+                {
+                    "input": "いつ",
+                    "expected_suggestions": [
+                        "いつ",
+                        "何時",
+                        "いつか",
+                        "いつも"
+                    ],
+                    "note": "When - question word"
+                }
+            ]
+        },
+        {
+            "category": "Common Verbs",
+            "tests": [
+                {
+                    "input": "た",
+                    "expected_suggestions": [
+                        "食べる",
+                        "たくさん",
+                        "ただ",
+                        "大切",
+                        "助ける",
+                        "た"
+                    ],
+                    "note": "Common た verbs and words"
+                },
+                {
+                    "input": "たべ",
+                    "expected_suggestions": [
+                        "食べる",
+                        "食べます",
+                        "食べた",
+                        "食べ物"
+                    ],
+                    "note": "Eat - verb conjugations and related words"
+                },
+                {
+                    "input": "のみ",
+                    "expected_suggestions": [
+                        "飲み",
+                        "飲みます",
+                        "飲む",
+                        "飲み物",
+                        "のみ"
+                    ],
+                    "note": "Drink - verb forms"
+                },
+                {
+                    "input": "い",
+                    "expected_suggestions": [
+                        "いく",
+                        "いい",
+                        "います",
+                        "言う",
+                        "いる",
+                        "い"
+                    ],
+                    "note": "Common verbs and words starting with い"
+                },
+                {
+                    "input": "いき",
+                    "expected_suggestions": [
+                        "行きます",
+                        "行く",
+                        "行き",
+                        "生き"
+                    ],
+                    "note": "Go - verb forms"
+                }
+            ]
+        },
+        {
+            "category": "Time and Date Related",
+            "tests": [
+                {
+                    "input": "きょ",
+                    "expected_suggestions": [
+                        "今日",
+                        "教室",
+                        "去年",
+                        "きょう",
+                        "教"
+                    ],
+                    "note": "Today and related words"
+                },
+                {
+                    "input": "きのう",
+                    "expected_suggestions": [
+                        "昨日",
+                        "きのう"
+                    ],
+                    "note": "Yesterday"
+                },
+                {
+                    "input": "あした",
+                    "expected_suggestions": [
+                        "明日",
+                        "あした"
+                    ],
+                    "note": "Tomorrow"
+                },
+                {
+                    "input": "いま",
+                    "expected_suggestions": [
+                        "今",
+                        "いま"
+                    ],
+                    "note": "Now"
+                },
+                {
+                    "input": "げつよう",
+                    "expected_suggestions": [
+                        "月曜日",
+                        "月曜",
+                        "げつよう"
+                    ],
+                    "note": "Monday"
+                }
+            ]
+        },
+        {
+            "category": "Personal Pronouns",
+            "tests": [
+                {
+                    "input": "わ",
+                    "expected_suggestions": [
+                        "私",
+                        "わかる",
+                        "悪い",
+                        "わたし",
+                        "わ"
+                    ],
+                    "note": "I/me and common words"
+                },
+                {
+                    "input": "わた",
+                    "expected_suggestions": [
+                        "私",
+                        "わたし",
+                        "渡し",
+                        "渡す"
+                    ],
+                    "note": "I/me (watashi)"
+                },
+                {
+                    "input": "わたし",
+                    "expected_suggestions": [
+                        "私",
+                        "私の",
+                        "私は",
+                        "私たち",
+                        "わたし"
+                    ],
+                    "note": "I with particles and plural"
+                },
+                {
+                    "input": "あな",
+                    "expected_suggestions": [
+                        "あなた",
+                        "穴",
+                        "あなたの",
+                        "あなたは"
+                    ],
+                    "note": "You"
+                }
+            ]
+        },
+        {
+            "category": "Common Adjectives",
+            "tests": [
+                {
+                    "input": "おお",
+                    "expected_suggestions": [
+                        "大きい",
+                        "多い",
+                        "大きな",
+                        "おおきい"
+                    ],
+                    "note": "Big/many"
+                },
+                {
+                    "input": "ちい",
+                    "expected_suggestions": [
+                        "小さい",
+                        "小さな",
+                        "ちいさい"
+                    ],
+                    "note": "Small"
+                },
+                {
+                    "input": "たか",
+                    "expected_suggestions": [
+                        "高い",
+                        "高",
+                        "鷹",
+                        "たかい"
+                    ],
+                    "note": "High/expensive/tall"
+                },
+                {
+                    "input": "やす",
+                    "expected_suggestions": [
+                        "安い",
+                        "休み",
+                        "易い",
+                        "やすい"
+                    ],
+                    "note": "Cheap/easy"
+                }
+            ]
+        },
+        {
+            "category": "Location and Places",
+            "tests": [
+                {
+                    "input": "がっ",
+                    "expected_suggestions": [
+                        "学校",
+                        "がっこう",
+                        "楽器"
+                    ],
+                    "note": "School"
+                },
+                {
+                    "input": "うち",
+                    "expected_suggestions": [
+                        "家",
+                        "うち",
+                        "内"
+                    ],
+                    "note": "Home/house"
+                },
+                {
+                    "input": "えき",
+                    "expected_suggestions": [
+                        "駅",
+                        "えき",
+                        "液"
+                    ],
+                    "note": "Station"
+                },
+                {
+                    "input": "みせ",
+                    "expected_suggestions": [
+                        "店",
+                        "見せる",
+                        "みせ"
+                    ],
+                    "note": "Store/shop"
+                }
+            ]
+        },
+        {
+            "category": "Numbers",
+            "tests": [
+                {
+                    "input": "いち",
+                    "expected_suggestions": [
+                        "一",
+                        "1",
+                        "いち",
+                        "位置"
+                    ],
+                    "note": "One"
+                },
+                {
+                    "input": "に",
+                    "expected_suggestions": [
+                        "二",
+                        "2",
+                        "に",
+                        "荷",
+                        "煮"
+                    ],
+                    "note": "Two (also particle)"
+                },
+                {
+                    "input": "さん",
+                    "expected_suggestions": [
+                        "三",
+                        "3",
+                        "さん",
+                        "山",
+                        "参"
+                    ],
+                    "note": "Three (also honorific suffix)"
+                }
+            ]
+        },
+        {
+            "category": "Common Phrases - Full Sentence Prediction",
+            "tests": [
+                {
+                    "input": "よろ",
+                    "expected_suggestions": [
+                        "よろしくお願いします",
+                        "よろしく",
+                        "よろしくお願いいたします",
+                        "宜しく"
+                    ],
+                    "note": "Nice to meet you / Please treat me well"
+                },
+                {
+                    "input": "おねが",
+                    "expected_suggestions": [
+                        "お願いします",
+                        "お願い",
+                        "お願いいたします"
+                    ],
+                    "note": "Please (formal request)"
+                },
+                {
+                    "input": "しつれい",
+                    "expected_suggestions": [
+                        "失礼します",
+                        "失礼",
+                        "失礼しました"
+                    ],
+                    "note": "Excuse me (leaving)"
+                },
+                {
+                    "input": "おげん",
+                    "expected_suggestions": [
+                        "お元気ですか",
+                        "お元気",
+                        "元気"
+                    ],
+                    "note": "How are you"
+                }
+            ]
+        },
+        {
+            "category": "Weather Related",
+            "tests": [
+                {
+                    "input": "てん",
+                    "expected_suggestions": [
+                        "天気",
+                        "店",
+                        "点",
+                        "てんき"
+                    ],
+                    "note": "Weather"
+                },
+                {
+                    "input": "あめ",
+                    "expected_suggestions": [
+                        "雨",
+                        "飴",
+                        "あめ"
+                    ],
+                    "note": "Rain/candy"
+                },
+                {
+                    "input": "ゆき",
+                    "expected_suggestions": [
+                        "雪",
+                        "行き",
+                        "ゆき"
+                    ],
+                    "note": "Snow"
+                }
+            ]
+        },
+        {
+            "category": "People and Relationships",
+            "tests": [
+                {
+                    "input": "せん",
+                    "expected_suggestions": [
+                        "先生",
+                        "先",
+                        "千",
+                        "せんせい"
+                    ],
+                    "note": "Teacher"
+                },
+                {
+                    "input": "がく",
+                    "expected_suggestions": [
+                        "学生",
+                        "学",
+                        "楽",
+                        "がくせい"
+                    ],
+                    "note": "Student"
+                },
+                {
+                    "input": "とも",
+                    "expected_suggestions": [
+                        "友達",
+                        "友",
+                        "共",
+                        "ともだち"
+                    ],
+                    "note": "Friend"
+                },
+                {
+                    "input": "かぞ",
+                    "expected_suggestions": [
+                        "家族",
+                        "数",
+                        "かぞく"
+                    ],
+                    "note": "Family"
+                }
+            ]
+        },
+        {
+            "category": "Study and Work",
+            "tests": [
+                {
+                    "input": "べん",
+                    "expected_suggestions": [
+                        "勉強",
+                        "弁当",
+                        "便",
+                        "べんきょう"
+                    ],
+                    "note": "Study"
+                },
+                {
+                    "input": "しご",
+                    "expected_suggestions": [
+                        "仕事",
+                        "しごと"
+                    ],
+                    "note": "Work/job"
+                },
+                {
+                    "input": "かい",
+                    "expected_suggestions": [
+                        "会社",
+                        "会",
+                        "買い",
+                        "かいしゃ"
+                    ],
+                    "note": "Company"
+                }
+            ]
+        },
+        {
+            "category": "Food and Drinks",
+            "tests": [
+                {
+                    "input": "ご",
+                    "expected_suggestions": [
+                        "ご飯",
+                        "五",
+                        "後",
+                        "ごはん"
+                    ],
+                    "note": "Rice/meal"
+                },
+                {
+                    "input": "みず",
+                    "expected_suggestions": [
+                        "水",
+                        "みず"
+                    ],
+                    "note": "Water"
+                },
+                {
+                    "input": "おちゃ",
+                    "expected_suggestions": [
+                        "お茶",
+                        "おちゃ"
+                    ],
+                    "note": "Tea"
+                }
+            ]
+        }
+    ],
+    "behavioral_notes": {
+        "prediction_timing": "Suggestions appear immediately as each character is typed",
+        "suggestion_ordering": "Most frequently used words/phrases appear first, followed by less common alternatives",
+        "context_awareness": "IME learns from user history and adjusts suggestions based on frequently typed phrases",
+        "kanji_vs_hiragana": "Common words show both kanji and hiragana versions, proper nouns prioritize katakana",
+        "phrase_completion": "Longer input (3+ characters) triggers phrase-level suggestions like complete greetings",
+        "particle_handling": "Common particles (は, の, を, に, etc.) appear as single-character suggestions",
+        "selection_method": "Use number keys (1-9), arrow keys, or click to select from suggestion list",
+        "learning_behavior": "IME adapts - if you consistently choose one kanji variant, it will prioritize that in future"
+    },
+    "common_patterns": {
+        "greeting_pattern": "こ → こん → こんに → こんにち → こんにちは (progressive completion)",
+        "verb_pattern": "た → たべ → たべる (verb root to full form)",
+        "polite_pattern": "お → おは → おはよう → おはようございます (polite forms expand)",
+        "kanji_alternatives": "Same reading shows multiple kanji options based on context and frequency"
+    }
+}

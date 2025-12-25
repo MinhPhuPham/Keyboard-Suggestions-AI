@@ -1,0 +1,98 @@
+{
+  "total_passed": 62,
+  "total_tests": 62,
+  "success_rate": 100.0,
+  "category_results": [
+    {
+      "name": "Common Greetings - Progressive Suggestions",
+      "passed": 5,
+      "total": 5,
+      "percentage": 100.0
+    },
+    {
+      "name": "Thank You Expressions",
+      "passed": 4,
+      "total": 4,
+      "percentage": 100.0
+    },
+    {
+      "name": "Common Daily Words",
+      "passed": 6,
+      "total": 6,
+      "percentage": 100.0
+    },
+    {
+      "name": "Question Words",
+      "passed": 5,
+      "total": 5,
+      "percentage": 100.0
+    },
+    {
+      "name": "Common Verbs",
+      "passed": 5,
+      "total": 5,
+      "percentage": 100.0
+    },
+    {
+      "name": "Time and Date Related",
+      "passed": 5,
+      "total": 5,
+      "percentage": 100.0
+    },
+    {
+      "name": "Personal Pronouns",
+      "passed": 4,
+      "total": 4,
+      "percentage": 100.0
+    },
+    {
+      "name": "Common Adjectives",
+      "passed": 4,
+      "total": 4,
+      "percentage": 100.0
+    },
+    {
+      "name": "Location and Places",
+      "passed": 4,
+      "total": 4,
+      "percentage": 100.0
+    },
+    {
+      "name": "Numbers",
+      "passed": 3,
+      "total": 3,
+      "percentage": 100.0
+    },
+    {
+      "name": "Common Phrases - Full Sentence Prediction",
+      "passed": 4,
+      "total": 4,
+      "percentage": 100.0
+    },
+    {
+      "name": "Weather Related",
+      "passed": 3,
+      "total": 3,
+      "percentage": 100.0
+    },
+    {
+      "name": "People and Relationships",
+      "passed": 4,
+      "total": 4,
+      "percentage": 100.0
+    },
+    {
+      "name": "Study and Work",
+      "passed": 3,
+      "total": 3,
+      "percentage": 100.0
+    },
+    {
+      "name": "Food and Drinks",
+      "passed": 3,
+      "total": 3,
+      "percentage": 100.0
+    }
+  ],
+  "failed_tests": []
+}

@@ -95,7 +95,7 @@ def export_to_coreml(
     )
     
     # Add metadata
-    mlmodel.author = "Keyboard Suggestions AI"
+    mlmodel.author = "Minh Phu Pham"
     mlmodel.license = "MIT"
     mlmodel.short_description = "Multilingual next-word prediction model"
     mlmodel.version = "1.0.0"

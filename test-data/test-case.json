@@ -1,0 +1,426 @@
+{
+    "description": "Test cases for Japanese IME autocomplete/suggestion behavior",
+    "test_cases": [
+        {
+            "category": "Basic Hiragana Conversion",
+            "tests": [
+                {
+                    "input": "a",
+                    "expected_suggestions": [
+                        "あ"
+                    ],
+                    "note": "Single vowel converts to hiragana"
+                },
+                {
+                    "input": "ka",
+                    "expected_suggestions": [
+                        "か"
+                    ],
+                    "note": "Consonant + vowel forms hiragana character"
+                },
+                {
+                    "input": "kon",
+                    "expected_suggestions": [
+                        "こん"
+                    ],
+                    "note": "Partial word in hiragana"
+                }
+            ]
+        },
+        {
+            "category": "Common Words - Hiragana to Kanji",
+            "tests": [
+                {
+                    "input": "konnichiwa",
+                    "hiragana": "こんにちは",
+                    "expected_suggestions": [
+                        "こんにちは",
+                        "今日は"
+                    ],
+                    "note": "Hello - most common stays as hiragana, but kanji option exists"
+                },
+                {
+                    "input": "arigatou",
+                    "hiragana": "ありがとう",
+                    "expected_suggestions": [
+                        "ありがとう",
+                        "有難う",
+                        "有り難う"
+                    ],
+                    "note": "Thank you - multiple writing styles"
+                },
+                {
+                    "input": "nihongo",
+                    "hiragana": "にほんご",
+                    "expected_suggestions": [
+                        "日本語",
+                        "にほんご"
+                    ],
+                    "note": "Japanese language - kanji preferred"
+                },
+                {
+                    "input": "haru",
+                    "hiragana": "はる",
+                    "expected_suggestions": [
+                        "春",
+                        "張る",
+                        "貼る",
+                        "晴る",
+                        "はる"
+                    ],
+                    "note": "Spring - multiple kanji with same reading"
+                },
+                {
+                    "input": "sensei",
+                    "hiragana": "せんせい",
+                    "expected_suggestions": [
+                        "先生",
+                        "せんせい"
+                    ],
+                    "note": "Teacher"
+                },
+                {
+                    "input": "gakkou",
+                    "hiragana": "がっこう",
+                    "expected_suggestions": [
+                        "学校",
+                        "がっこう"
+                    ],
+                    "note": "School"
+                },
+                {
+                    "input": "tokyo",
+                    "hiragana": "とうきょう",
+                    "expected_suggestions": [
+                        "東京",
+                        "とうきょう"
+                    ],
+                    "note": "Tokyo city name"
+                },
+                {
+                    "input": "nihon",
+                    "hiragana": "にほん",
+                    "expected_suggestions": [
+                        "日本",
+                        "にほん"
+                    ],
+                    "note": "Japan"
+                }
+            ]
+        },
+        {
+            "category": "Katakana Words (Foreign/Loanwords)",
+            "tests": [
+                {
+                    "input": "amerika",
+                    "hiragana": "あめりか",
+                    "expected_suggestions": [
+                        "アメリカ",
+                        "あめりか"
+                    ],
+                    "note": "America - typically written in katakana"
+                },
+                {
+                    "input": "koohii",
+                    "hiragana": "こーひー",
+                    "expected_suggestions": [
+                        "コーヒー",
+                        "珈琲",
+                        "こーひー"
+                    ],
+                    "note": "Coffee - katakana common, kanji rare"
+                },
+                {
+                    "input": "anime",
+                    "hiragana": "あにめ",
+                    "expected_suggestions": [
+                        "アニメ",
+                        "あにめ"
+                    ],
+                    "note": "Anime"
+                },
+                {
+                    "input": "sandoicchi",
+                    "hiragana": "さんどいっち",
+                    "expected_suggestions": [
+                        "サンドイッチ",
+                        "さんどいっち"
+                    ],
+                    "note": "Sandwich"
+                },
+                {
+                    "input": "maikuru",
+                    "hiragana": "まいくる",
+                    "expected_suggestions": [
+                        "マイケル",
+                        "まいくる"
+                    ],
+                    "note": "Michael - foreign name"
+                }
+            ]
+        },
+        {
+            "category": "Phrases and Sentences",
+            "tests": [
+                {
+                    "input": "ohayou",
+                    "hiragana": "おはよう",
+                    "expected_suggestions": [
+                        "おはよう",
+                        "お早う"
+                    ],
+                    "note": "Good morning"
+                },
+                {
+                    "input": "sumimasen",
+                    "hiragana": "すみません",
+                    "expected_suggestions": [
+                        "すみません",
+                        "済みません"
+                    ],
+                    "note": "Excuse me / Sorry"
+                },
+                {
+                    "input": "watashi",
+                    "hiragana": "わたし",
+                    "expected_suggestions": [
+                        "私",
+                        "わたし"
+                    ],
+                    "note": "I / Me"
+                },
+                {
+                    "input": "benkyou",
+                    "hiragana": "べんきょう",
+                    "expected_suggestions": [
+                        "勉強",
+                        "べんきょう"
+                    ],
+                    "note": "Study"
+                }
+            ]
+        },
+        {
+            "category": "Special Characters and Small Kana",
+            "tests": [
+                {
+                    "input": "nn",
+                    "expected_suggestions": [
+                        "ん"
+                    ],
+                    "note": "Double n creates ん"
+                },
+                {
+                    "input": "tsu",
+                    "expected_suggestions": [
+                        "つ"
+                    ],
+                    "note": "Small tsu (っ) requires different input"
+                },
+                {
+                    "input": "kka",
+                    "expected_suggestions": [
+                        "っか"
+                    ],
+                    "note": "Double consonant creates small tsu"
+                },
+                {
+                    "input": "xa",
+                    "expected_suggestions": [
+                        "ぁ"
+                    ],
+                    "note": "x prefix creates small vowel"
+                },
+                {
+                    "input": "kya",
+                    "expected_suggestions": [
+                        "きゃ"
+                    ],
+                    "note": "Combination sounds"
+                }
+            ]
+        },
+        {
+            "category": "Homonyms (Same Reading, Different Kanji)",
+            "tests": [
+                {
+                    "input": "kami",
+                    "hiragana": "かみ",
+                    "expected_suggestions": [
+                        "神",
+                        "紙",
+                        "髪",
+                        "上",
+                        "かみ"
+                    ],
+                    "note": "God, paper, hair, above - context determines choice"
+                },
+                {
+                    "input": "hashi",
+                    "hiragana": "はし",
+                    "expected_suggestions": [
+                        "橋",
+                        "箸",
+                        "端",
+                        "はし"
+                    ],
+                    "note": "Bridge, chopsticks, edge"
+                },
+                {
+                    "input": "kou",
+                    "hiragana": "こう",
+                    "expected_suggestions": [
+                        "工",
+                        "公",
+                        "校",
+                        "高",
+                        "こう"
+                    ],
+                    "note": "Many meanings: craft, public, school, high, etc."
+                }
+            ]
+        },
+        {
+            "category": "Symbols and Special Characters",
+            "tests": [
+                {
+                    "input": "yen",
+                    "hiragana": "えん",
+                    "expected_suggestions": [
+                        "円",
+                        "¥",
+                        "えん"
+                    ],
+                    "note": "Yen symbol available in conversion"
+                },
+                {
+                    "input": "hidari",
+                    "hiragana": "ひだり",
+                    "expected_suggestions": [
+                        "左",
+                        "←",
+                        "ひだり"
+                    ],
+                    "note": "Left arrow symbol"
+                },
+                {
+                    "input": "migi",
+                    "hiragana": "みぎ",
+                    "expected_suggestions": [
+                        "右",
+                        "→",
+                        "みぎ"
+                    ],
+                    "note": "Right arrow symbol"
+                }
+            ]
+        },
+        {
+            "category": "Partial Input Suggestions",
+            "tests": [
+                {
+                    "input": "wa",
+                    "expected_suggestions": [
+                        "わ"
+                    ],
+                    "note": "Shows hiragana immediately as you type"
+                },
+                {
+                    "input": "wata",
+                    "expected_suggestions": [
+                        "わた"
+                    ],
+                    "note": "Builds hiragana progressively"
+                },
+                {
+                    "input": "watash",
+                    "expected_suggestions": [
+                        "わたし"
+                    ],
+                    "note": "Predictive completion may suggest finishing the word"
+                },
+                {
+                    "input": "konni",
+                    "expected_suggestions": [
+                        "こんに"
+                    ],
+                    "note": "Partial greeting"
+                }
+            ]
+        },
+        {
+            "category": "Long Vowels",
+            "tests": [
+                {
+                    "input": "kou",
+                    "expected_suggestions": [
+                        "こう"
+                    ],
+                    "note": "Long o sound using ou"
+                },
+                {
+                    "input": "kuu",
+                    "expected_suggestions": [
+                        "くう"
+                    ],
+                    "note": "Long u sound using uu"
+                },
+                {
+                    "input": "toukyou",
+                    "hiragana": "とうきょう",
+                    "expected_suggestions": [
+                        "東京",
+                        "とうきょう"
+                    ],
+                    "note": "Tokyo with long vowels"
+                }
+            ]
+        },
+        {
+            "category": "Numbers and Dates",
+            "tests": [
+                {
+                    "input": "ichi",
+                    "hiragana": "いち",
+                    "expected_suggestions": [
+                        "一",
+                        "1",
+                        "いち"
+                    ],
+                    "note": "One - kanji and numeral"
+                },
+                {
+                    "input": "ni",
+                    "hiragana": "に",
+                    "expected_suggestions": [
+                        "二",
+                        "2",
+                        "に"
+                    ],
+                    "note": "Two"
+                },
+                {
+                    "input": "kyou",
+                    "hiragana": "きょう",
+                    "expected_suggestions": [
+                        "今日",
+                        "きょう"
+                    ],
+                    "note": "Today"
+                }
+            ]
+        }
+    ],
+    "notes": {
+        "conversion_process": "Japanese IME converts romaji → hiragana automatically, then pressing Space shows kanji suggestions",
+        "selection_method": "Use Space to cycle through suggestions, number keys (1-9) for quick selection, or Enter to accept current",
+        "function_keys": {
+            "F6": "Convert to hiragana",
+            "F7": "Convert to katakana",
+            "F8": "Convert to half-width katakana",
+            "F9": "Convert to full-width romaji",
+            "F10": "Convert to romaji"
+        },
+        "ime_behavior": "IME learns from user history and shows most frequently used conversions first"
+    }
+}

@@ -1,0 +1,14 @@
+{
+  "test_kanji_cases": {
+    "passed": 0,
+    "failed": 0,
+    "total": 0
+  },
+  "test_kanji_v2_cases": {
+    "passed": 32,
+    "failed": 0,
+    "total": 32,
+    "context_passed": 41,
+    "context_total": 58
+  }
+}

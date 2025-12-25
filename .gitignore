@@ -1,12 +1,36 @@
-data
+# Data files (too large for git)
+data/
 
-__pycache__
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
 
-android/KeyboardAI
-ios/KeyboardAI
+# Build outputs
+android/KeyboardAI/
+ios/KeyboardAI/
 
+# Packages
 *.zip
 
+# System files
 *.DS_Store
 
-.venv-coreml
+# Virtual environments
+.venv-coreml/
+.venv/
+venv/
+
+# Logs
+*.log
+
+# Models (download from releases instead)
+models/
+!models/.gitkeep
+!models/README.md
+
+# Mobile builds
+models/mobile/
+
+# User data
+data/user_preferences.json

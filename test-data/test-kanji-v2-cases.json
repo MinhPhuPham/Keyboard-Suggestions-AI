@@ -1,0 +1,1028 @@
+{
+    "description": "Advanced test cases for Japanese keyboard with complex kanji homonyms, context-aware suggestions, and adaptive learning behavior",
+    "focus": "Testing IME's ability to suggest correct kanji based on context, user history, and semantic understanding",
+    "test_categories": [
+        {
+            "category": "Complex Homonyms - Multiple Kanji Same Reading",
+            "description": "Words with identical pronunciation but completely different meanings requiring context",
+            "tests": [
+                {
+                    "input": "かみ",
+                    "expected_suggestions_default": [
+                        "神",
+                        "紙",
+                        "髪",
+                        "上",
+                        "かみ"
+                    ],
+                    "context_variations": [
+                        {
+                            "context": "preceding_text: 'お祈りをして'",
+                            "expected_priority": [
+                                "神",
+                                "かみ",
+                                "紙",
+                                "髪"
+                            ],
+                            "note": "After 'praying', 神 (god) should be prioritized"
+                        },
+                        {
+                            "context": "preceding_text: '印刷する'",
+                            "expected_priority": [
+                                "紙",
+                                "かみ",
+                                "神",
+                                "髪"
+                            ],
+                            "note": "After 'to print', 紙 (paper) should be prioritized"
+                        },
+                        {
+                            "context": "preceding_text: '美容院で'",
+                            "expected_priority": [
+                                "髪",
+                                "かみ",
+                                "神",
+                                "紙"
+                            ],
+                            "note": "After 'at beauty salon', 髪 (hair) should be prioritized"
+                        }
+                    ],
+                    "user_learning": {
+                        "scenario": "User frequently types '神様' (God)",
+                        "expected_behavior": "神 moves to top of suggestions for かみ input",
+                        "learning_threshold": "After 3-5 selections of 神"
+                    }
+                },
+                {
+                    "input": "はし",
+                    "expected_suggestions_default": [
+                        "橋",
+                        "箸",
+                        "端",
+                        "はし"
+                    ],
+                    "context_variations": [
+                        {
+                            "context": "preceding_text: '川に'",
+                            "expected_priority": [
+                                "橋",
+                                "はし",
+                                "箸",
+                                "端"
+                            ],
+                            "note": "After 'at river', 橋 (bridge) should be prioritized"
+                        },
+                        {
+                            "context": "preceding_text: '食事で'",
+                            "expected_priority": [
+                                "箸",
+                                "はし",
+                                "橋",
+                                "端"
+                            ],
+                            "note": "After 'during meal', 箸 (chopsticks) should be prioritized"
+                        },
+                        {
+                            "context": "preceding_text: 'テーブルの'",
+                            "expected_priority": [
+                                "端",
+                                "はし",
+                                "橋",
+                                "箸"
+                            ],
+                            "note": "After 'of table', 端 (edge) should be prioritized"
+                        }
+                    ],
+                    "user_learning": {
+                        "scenario": "User works in restaurant, frequently uses 箸",
+                        "expected_behavior": "箸 becomes default first suggestion",
+                        "learning_threshold": "After 5-7 selections"
+                    }
+                },
+                {
+                    "input": "あめ",
+                    "expected_suggestions_default": [
+                        "雨",
+                        "飴",
+                        "あめ"
+                    ],
+                    "context_variations": [
+                        {
+                            "context": "preceding_text: '今日は'",
+                            "expected_priority": [
+                                "雨",
+                                "あめ",
+                                "飴"
+                            ],
+                            "note": "Weather context, 雨 (rain) prioritized"
+                        },
+                        {
+                            "context": "preceding_text: '子供に'",
+                            "expected_priority": [
+                                "飴",
+                                "あめ",
+                                "雨"
+                            ],
+                            "note": "After 'to children', 飴 (candy) prioritized"
+                        }
+                    ],
+                    "pitch_accent_note": "雨 has high-low pitch, 飴 has low-high pitch - some IMEs may consider this"
+                },
+                {
+                    "input": "こう",
+                    "expected_suggestions_default": [
+                        "工",
+                        "公",
+                        "校",
+                        "高",
+                        "交",
+                        "考",
+                        "口",
+                        "こう"
+                    ],
+                    "context_variations": [
+                        {
+                            "context": "preceding_text: '学'",
+                            "expected_priority": [
+                                "校",
+                                "こう"
+                            ],
+                            "note": "学校 (school) - compound word completion"
+                        },
+                        {
+                            "context": "preceding_text: '小中'",
+                            "expected_priority": [
+                                "高",
+                                "こう"
+                            ],
+                            "note": "小中高 (elementary-middle-high) - educational sequence"
+                        },
+                        {
+                            "context": "preceding_text: '思'",
+                            "expected_priority": [
+                                "考",
+                                "こう"
+                            ],
+                            "note": "思考 (thinking) - compound word"
+                        }
+                    ],
+                    "note": "Extremely common reading with 20+ kanji options"
+                }
+            ]
+        },
+        {
+            "category": "Verbs with Multiple Kanji - Nuanced Meanings",
+            "description": "Same verb pronunciation with different kanji indicating subtle differences",
+            "tests": [
+                {
+                    "input": "きく",
+                    "expected_suggestions_default": [
+                        "聞く",
+                        "聴く",
+                        "訊く",
+                        "効く",
+                        "利く",
+                        "きく"
+                    ],
+                    "context_variations": [
+                        {
+                            "context": "preceding_text: '音楽を'",
+                            "expected_priority": [
+                                "聴く",
+                                "きく",
+                                "聞く"
+                            ],
+                            "note": "聴く = to listen intently (music, concert)"
+                        },
+                        {
+                            "context": "preceding_text: '話を'",
+                            "expected_priority": [
+                                "聞く",
+                                "きく",
+                                "聴く"
+                            ],
+                            "note": "聞く = to hear casually or to ask"
+                        },
+                        {
+                            "context": "preceding_text: '質問を'",
+                            "expected_priority": [
+                                "訊く",
+                                "聞く",
+                                "きく"
+                            ],
+                            "note": "訊く = to ask/inquire (literary, formal)"
+                        },
+                        {
+                            "context": "preceding_text: '薬が'",
+                            "expected_priority": [
+                                "効く",
+                                "きく"
+                            ],
+                            "note": "効く = to be effective (medicine)"
+                        }
+                    ],
+                    "user_learning": {
+                        "scenario": "Music enthusiast frequently uses 聴く",
+                        "expected_behavior": "聴く prioritized over 聞く for this user"
+                    }
+                },
+                {
+                    "input": "みる",
+                    "expected_suggestions_default": [
+                        "見る",
+                        "観る",
+                        "診る",
+                        "看る",
+                        "視る",
+                        "みる"
+                    ],
+                    "context_variations": [
+                        {
+                            "context": "preceding_text: '映画を'",
+                            "expected_priority": [
+                                "観る",
+                                "みる",
+                                "見る"
+                            ],
+                            "note": "観る = to watch intentionally (movies, shows)"
+                        },
+                        {
+                            "context": "preceding_text: '景色を'",
+                            "expected_priority": [
+                                "見る",
+                                "みる",
+                                "観る"
+                            ],
+                            "note": "見る = to see casually"
+                        },
+                        {
+                            "context": "preceding_text: '患者を'",
+                            "expected_priority": [
+                                "診る",
+                                "みる"
+                            ],
+                            "note": "診る = to examine medically"
+                        },
+                        {
+                            "context": "preceding_text: '病人を'",
+                            "expected_priority": [
+                                "看る",
+                                "みる"
+                            ],
+                            "note": "看る = to care for sick person"
+                        }
+                    ]
+                },
+                {
+                    "input": "あける",
+                    "expected_suggestions_default": [
+                        "開ける",
+                        "空ける",
+                        "明ける",
+                        "あける"
+                    ],
+                    "context_variations": [
+                        {
+                            "context": "preceding_text: 'ドアを'",
+                            "expected_priority": [
+                                "開ける",
+                                "あける"
+                            ],
+                            "note": "開ける = to open (door, window)"
+                        },
+                        {
+                            "context": "preceding_text: '席を'",
+                            "expected_priority": [
+                                "空ける",
+                                "あける"
+                            ],
+                            "note": "空ける = to empty, vacate"
+                        },
+                        {
+                            "context": "preceding_text: '夜が'",
+                            "expected_priority": [
+                                "明ける",
+                                "あける"
+                            ],
+                            "note": "明ける = day breaks, year ends"
+                        }
+                    ]
+                },
+                {
+                    "input": "はかる",
+                    "expected_suggestions_default": [
+                        "測る",
+                        "量る",
+                        "計る",
+                        "図る",
+                        "諮る",
+                        "はかる"
+                    ],
+                    "context_variations": [
+                        {
+                            "context": "preceding_text: '長さを'",
+                            "expected_priority": [
+                                "測る",
+                                "はかる"
+                            ],
+                            "note": "測る = to measure length/distance"
+                        },
+                        {
+                            "context": "preceding_text: '体重を'",
+                            "expected_priority": [
+                                "量る",
+                                "はかる"
+                            ],
+                            "note": "量る = to weigh, measure weight/volume"
+                        },
+                        {
+                            "context": "preceding_text: '時間を'",
+                            "expected_priority": [
+                                "計る",
+                                "はかる"
+                            ],
+                            "note": "計る = to time, measure time"
+                        },
+                        {
+                            "context": "preceding_text: '暗殺を'",
+                            "expected_priority": [
+                                "図る",
+                                "はかる"
+                            ],
+                            "note": "図る = to plot, plan"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "category": "Adjectives with Subtle Differences",
+            "description": "Same-sounding adjectives with nuanced meanings",
+            "tests": [
+                {
+                    "input": "あつい",
+                    "expected_suggestions_default": [
+                        "暑い",
+                        "熱い",
+                        "厚い",
+                        "あつい"
+                    ],
+                    "context_variations": [
+                        {
+                            "context": "preceding_text: '夏は'",
+                            "expected_priority": [
+                                "暑い",
+                                "あつい",
+                                "熱い"
+                            ],
+                            "note": "暑い = hot weather (antonym: 寒い)"
+                        },
+                        {
+                            "context": "preceding_text: 'お湯が'",
+                            "expected_priority": [
+                                "熱い",
+                                "あつい",
+                                "暑い"
+                            ],
+                            "note": "熱い = hot to touch (antonym: 冷たい)"
+                        },
+                        {
+                            "context": "preceding_text: '本が'",
+                            "expected_priority": [
+                                "厚い",
+                                "あつい"
+                            ],
+                            "note": "厚い = thick (antonym: 薄い)"
+                        }
+                    ],
+                    "user_learning": {
+                        "scenario": "User in hot climate, frequently discusses weather",
+                        "expected_behavior": "暑い becomes default suggestion"
+                    }
+                },
+                {
+                    "input": "はやい",
+                    "expected_suggestions_default": [
+                        "早い",
+                        "速い",
+                        "はやい"
+                    ],
+                    "context_variations": [
+                        {
+                            "context": "preceding_text: '朝'",
+                            "expected_priority": [
+                                "早い",
+                                "はやい",
+                                "速い"
+                            ],
+                            "note": "早い = early in time"
+                        },
+                        {
+                            "context": "preceding_text: '新幹線は'",
+                            "expected_priority": [
+                                "速い",
+                                "はやい",
+                                "早い"
+                            ],
+                            "note": "速い = fast in speed"
+                        }
+                    ]
+                },
+                {
+                    "input": "かわいい",
+                    "expected_suggestions_default": [
+                        "可愛い",
+                        "かわいい"
+                    ],
+                    "note": "Usually written in hiragana in modern usage, but kanji available"
+                }
+            ]
+        },
+        {
+            "category": "Compound Word Prediction",
+            "description": "IME predicts complete compound words based on first character",
+            "tests": [
+                {
+                    "input": "がく",
+                    "expected_suggestions": [
+                        "学校",
+                        "学生",
+                        "学習",
+                        "学問",
+                        "学",
+                        "楽",
+                        "がく"
+                    ],
+                    "note": "First character suggests common compounds"
+                },
+                {
+                    "input": "がっ",
+                    "expected_suggestions": [
+                        "学校",
+                        "合格",
+                        "がっこう",
+                        "がっかり",
+                        "がっ"
+                    ],
+                    "note": "がっ triggers small tsu + こう compound suggestions"
+                },
+                {
+                    "input": "とう",
+                    "expected_suggestions": [
+                        "東京",
+                        "東",
+                        "当",
+                        "投",
+                        "答",
+                        "糖",
+                        "とう"
+                    ],
+                    "context_variations": [
+                        {
+                            "context": "preceding_text: '新幹線で'",
+                            "expected_priority": [
+                                "東京",
+                                "とう"
+                            ],
+                            "note": "Travel context suggests 東京"
+                        }
+                    ]
+                },
+                {
+                    "input": "でん",
+                    "expected_suggestions": [
+                        "電話",
+                        "電車",
+                        "電気",
+                        "電子",
+                        "電",
+                        "でん"
+                    ],
+                    "note": "Common 電- prefix compounds"
+                }
+            ]
+        },
+        {
+            "category": "Proper Nouns and Names",
+            "description": "Place names and proper nouns with learning behavior",
+            "tests": [
+                {
+                    "input": "とうきょう",
+                    "expected_suggestions_default": [
+                        "東京",
+                        "とうきょう"
+                    ],
+                    "user_learning": {
+                        "scenario": "User frequently types Tokyo",
+                        "expected_behavior": "東京 stays at top consistently"
+                    }
+                },
+                {
+                    "input": "さとう",
+                    "expected_suggestions_default": [
+                        "佐藤",
+                        "砂糖",
+                        "さとう"
+                    ],
+                    "context_variations": [
+                        {
+                            "context": "preceding_text: '田中さんと'",
+                            "expected_priority": [
+                                "佐藤",
+                                "さとう"
+                            ],
+                            "note": "Name context - 佐藤 is common surname"
+                        },
+                        {
+                            "context": "preceding_text: 'コーヒーに'",
+                            "expected_priority": [
+                                "砂糖",
+                                "さとう"
+                            ],
+                            "note": "Coffee context - 砂糖 means sugar"
+                        }
+                    ]
+                },
+                {
+                    "input": "たなか",
+                    "expected_suggestions_default": [
+                        "田中",
+                        "たなか"
+                    ],
+                    "note": "Most common Japanese surname"
+                }
+            ]
+        },
+        {
+            "category": "Similar Meanings - Different Nuance",
+            "description": "Kanji pairs with same core meaning but different usage",
+            "tests": [
+                {
+                    "input": "まち",
+                    "expected_suggestions_default": [
+                        "町",
+                        "街",
+                        "まち"
+                    ],
+                    "context_variations": [
+                        {
+                            "context": "preceding_text: '小さな'",
+                            "expected_priority": [
+                                "町",
+                                "まち"
+                            ],
+                            "note": "町 = small town, administrative district"
+                        },
+                        {
+                            "context": "preceding_text: '賑やかな'",
+                            "expected_priority": [
+                                "街",
+                                "まち"
+                            ],
+                            "note": "街 = bustling city streets, downtown"
+                        }
+                    ]
+                },
+                {
+                    "input": "かなしい",
+                    "expected_suggestions_default": [
+                        "悲しい",
+                        "哀しい",
+                        "かなしい"
+                    ],
+                    "context_variations": [
+                        {
+                            "context": "genre: 'casual_conversation'",
+                            "expected_priority": [
+                                "悲しい",
+                                "かなしい"
+                            ],
+                            "note": "悲しい is standard usage"
+                        },
+                        {
+                            "context": "genre: 'literary_writing'",
+                            "expected_priority": [
+                                "哀しい",
+                                "悲しい",
+                                "かなしい"
+                            ],
+                            "note": "哀しい used in literature for unspoken sadness"
+                        }
+                    ]
+                },
+                {
+                    "input": "うまれる",
+                    "expected_suggestions_default": [
+                        "生まれる",
+                        "産まれる",
+                        "うまれる"
+                    ],
+                    "context_variations": [
+                        {
+                            "context": "preceding_text: '1990年に'",
+                            "expected_priority": [
+                                "生まれる",
+                                "うまれる"
+                            ],
+                            "note": "生まれる = general birth"
+                        },
+                        {
+                            "context": "preceding_text: '赤ちゃんが'",
+                            "expected_priority": [
+                                "産まれる",
+                                "生まれる",
+                                "うまれる"
+                            ],
+                            "note": "産まれる = moment of birth"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "category": "Technical and Scientific Terms",
+            "description": "Specialized vocabulary with context-dependent suggestions",
+            "tests": [
+                {
+                    "input": "かがく",
+                    "expected_suggestions_default": [
+                        "科学",
+                        "化学",
+                        "かがく"
+                    ],
+                    "context_variations": [
+                        {
+                            "context": "preceding_text: '実験で'",
+                            "expected_priority": [
+                                "化学",
+                                "科学",
+                                "かがく"
+                            ],
+                            "note": "化学 = chemistry"
+                        },
+                        {
+                            "context": "preceding_text: '研究'",
+                            "expected_priority": [
+                                "科学",
+                                "化学",
+                                "かがく"
+                            ],
+                            "note": "科学 = science (general)"
+                        }
+                    ],
+                    "user_learning": {
+                        "scenario": "Chemistry student frequently uses 化学",
+                        "expected_behavior": "化学 becomes primary suggestion"
+                    }
+                },
+                {
+                    "input": "こうせい",
+                    "expected_suggestions_default": [
+                        "校正",
+                        "公正",
+                        "構成",
+                        "厚生",
+                        "こうせい"
+                    ],
+                    "context_variations": [
+                        {
+                            "context": "preceding_text: '原稿の'",
+                            "expected_priority": [
+                                "校正",
+                                "こうせい"
+                            ],
+                            "note": "校正 = proofreading"
+                        },
+                        {
+                            "context": "preceding_text: '裁判の'",
+                            "expected_priority": [
+                                "公正",
+                                "こうせい"
+                            ],
+                            "note": "公正 = fairness, justice"
+                        },
+                        {
+                            "context": "preceding_text: '文章の'",
+                            "expected_priority": [
+                                "構成",
+                                "こうせい"
+                            ],
+                            "note": "構成 = composition, structure"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "category": "Frequency-Based Learning Scenarios",
+            "description": "How IME adapts based on user typing patterns",
+            "tests": [
+                {
+                    "test_id": "learning_001",
+                    "scenario": "New user - no history",
+                    "input": "かい",
+                    "expected_suggestions": [
+                        "会",
+                        "買",
+                        "海",
+                        "貝",
+                        "かい"
+                    ],
+                    "note": "Default frequency ordering from common usage"
+                },
+                {
+                    "test_id": "learning_002",
+                    "scenario": "Business user - emails about meetings",
+                    "input": "かい",
+                    "user_history": [
+                        "会議",
+                        "会社",
+                        "会う"
+                    ],
+                    "expected_suggestions": [
+                        "会",
+                        "かい",
+                        "買",
+                        "海"
+                    ],
+                    "note": "会 (meeting/company) prioritized due to business context"
+                },
+                {
+                    "test_id": "learning_003",
+                    "scenario": "Shopping enthusiast",
+                    "input": "かい",
+                    "user_history": [
+                        "買い物",
+                        "買う",
+                        "購買"
+                    ],
+                    "expected_suggestions": [
+                        "買",
+                        "かい",
+                        "会",
+                        "海"
+                    ],
+                    "note": "買 (buy) moves to top"
+                },
+                {
+                    "test_id": "learning_004",
+                    "scenario": "Marine biologist",
+                    "input": "かい",
+                    "user_history": [
+                        "海洋",
+                        "海",
+                        "深海"
+                    ],
+                    "expected_suggestions": [
+                        "海",
+                        "かい",
+                        "会",
+                        "買"
+                    ],
+                    "note": "海 (sea) prioritized for specialist"
+                }
+            ]
+        },
+        {
+            "category": "Multi-Character Context Prediction",
+            "description": "IME considers surrounding characters for better prediction",
+            "tests": [
+                {
+                    "input": "せい",
+                    "expected_suggestions_default": [
+                        "生",
+                        "性",
+                        "成",
+                        "正",
+                        "政",
+                        "制",
+                        "せい"
+                    ],
+                    "context_variations": [
+                        {
+                            "context": "preceding_text: '学'",
+                            "expected_priority": [
+                                "生",
+                                "せい"
+                            ],
+                            "note": "学生 (student) - common compound"
+                        },
+                        {
+                            "context": "preceding_text: '男'",
+                            "expected_priority": [
+                                "性",
+                                "せい"
+                            ],
+                            "note": "男性 (male) - gender compound"
+                        },
+                        {
+                            "context": "preceding_text: '完'",
+                            "expected_priority": [
+                                "成",
+                                "せい"
+                            ],
+                            "note": "完成 (completion)"
+                        },
+                        {
+                            "context": "following_text: '府'",
+                            "expected_priority": [
+                                "政",
+                                "せい"
+                            ],
+                            "note": "政府 (government)"
+                        }
+                    ]
+                },
+                {
+                    "input": "し",
+                    "expected_suggestions_default": [
+                        "市",
+                        "私",
+                        "死",
+                        "詩",
+                        "師",
+                        "し"
+                    ],
+                    "context_variations": [
+                        {
+                            "context": "preceding_text: '都'",
+                            "expected_priority": [
+                                "市",
+                                "し"
+                            ],
+                            "note": "都市 (city)"
+                        },
+                        {
+                            "context": "preceding_text: '教'",
+                            "expected_priority": [
+                                "師",
+                                "し"
+                            ],
+                            "note": "教師 (teacher)"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "category": "Difficult Edge Cases",
+            "description": "Challenging scenarios requiring sophisticated prediction",
+            "tests": [
+                {
+                    "input": "きょう",
+                    "expected_suggestions_default": [
+                        "今日",
+                        "教",
+                        "京",
+                        "きょう"
+                    ],
+                    "context_variations": [
+                        {
+                            "context": "sentence_start: true",
+                            "expected_priority": [
+                                "今日",
+                                "きょう",
+                                "教"
+                            ],
+                            "note": "Sentence start often means 'today'"
+                        },
+                        {
+                            "context": "preceding_text: '東'",
+                            "expected_priority": [
+                                "京",
+                                "きょう"
+                            ],
+                            "note": "東京 (Tokyo)"
+                        },
+                        {
+                            "context": "following_text: '室'",
+                            "expected_priority": [
+                                "教",
+                                "きょう"
+                            ],
+                            "note": "教室 (classroom)"
+                        }
+                    ]
+                },
+                {
+                    "input": "じ",
+                    "expected_suggestions_default": [
+                        "時",
+                        "自",
+                        "字",
+                        "事",
+                        "次",
+                        "じ"
+                    ],
+                    "note": "Extremely common character with many meanings",
+                    "context_variations": [
+                        {
+                            "context": "preceding_text: '3'",
+                            "expected_priority": [
+                                "時",
+                                "じ"
+                            ],
+                            "note": "3時 (3 o'clock)"
+                        },
+                        {
+                            "context": "preceding_text: '漢'",
+                            "expected_priority": [
+                                "字",
+                                "じ"
+                            ],
+                            "note": "漢字 (kanji characters)"
+                        }
+                    ]
+                },
+                {
+                    "input": "かいとう",
+                    "expected_suggestions_default": [
+                        "回答",
+                        "解答",
+                        "かいとう"
+                    ],
+                    "context_variations": [
+                        {
+                            "context": "preceding_text: 'アンケート'",
+                            "expected_priority": [
+                                "回答",
+                                "かいとう"
+                            ],
+                            "note": "回答 = answer/reply to survey"
+                        },
+                        {
+                            "context": "preceding_text: 'テストの'","expected_priority": ["解答","かいとう"
+                        ],
+                        "note": "解答 = answer/solution to problem"
+                    }
+                ]
+            }
+        ]
+    }
+],
+"ime_learning_behavior": {
+    "description": "How Japanese IME learns and adapts to user patterns",
+    "learning_mechanisms": [
+        {
+            "type": "frequency_based",
+            "description": "Tracks which kanji user selects most often for each reading",
+            "example": "If user repeatedly chooses 聴く over 聞く, 聴く moves to top"
+        },
+        {
+            "type": "context_aware",
+            "description": "Learns user's common word combinations and phrases",
+            "example": "Business user types '会議' often, so '会' prioritized after 'かい'"
+        },
+        {
+            "type": "temporal_pattern",
+            "description": "Recent selections weighted more heavily than old ones",
+            "example": "Last 10-20 selections influence current suggestions more"
+        },
+        {
+            "type": "domain_specific",
+            "description": "Adapts to user's professional or personal domain",
+            "example": "Medical professional sees 診る prioritized, chef sees 切る prioritized"
+        },
+        {
+            "type": "compound_learning",
+            "description": "Learns user's preferred multi-character compounds",
+            "example": "User types '東京' frequently, partial input 'とう' suggests '東京' early"
+        }
+    ],
+    "reset_conditions": [
+        "User manually resets IME dictionary",
+        "After system reinstallation",
+        "When IME learning is disabled in settings"
+    ],
+    "typical_learning_speed": {
+        "casual_users": "5-10 selections to influence suggestions",
+        "frequent_typists": "3-5 selections for rapid adaptation",
+        "domain_specialists": "System recognizes patterns after 7-10 domain-specific inputs"
+    }
+},
+"testing_recommendations": {
+    "priority_tests": [
+        "Test all homonym cases with neutral context first",
+        "Verify context-based prioritization works correctly",
+        "Ensure learning behavior accumulates over multiple inputs",
+        "Test that learned preferences persist across sessions",
+        "Verify compound word prediction triggers appropriately"
+    ],
+    "regression_tests": [
+        "After updating dictionary, verify homonyms still ordered correctly",
+        "Ensure learning doesn't over-prioritize rare selections",
+        "Test that context doesn't completely override user learning"
+    ],
+    "performance_tests": [
+        "Suggestion generation should be < 100ms",
+        "Learning updates should not slow down input",
+        "Dictionary lookup should handle 10,000+ kanji efficiently"
+    ]
+},
+"notes": {
+    "kanji_complexity": "Japanese has over 2000 common kanji, many sharing the same reading",
+    "context_importance": "Context is critical - same hiragana can mean 10+ different things",
+    "learning_necessity": "Without learning, users would need to select from long lists constantly",
+    "cultural_note": "Native Japanese speakers rely heavily on context and muscle memory for kanji selection"
+}
+}
