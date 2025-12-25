@@ -1,6 +1,6 @@
-# Keyboard Suggestions AI
+# Keyboard Suggestions LSTM
 
-AI-powered next-word prediction for mobile keyboards with multilingual support (Japanese + English).
+Model-powered next-word prediction for mobile keyboards with multilingual support (Japanese + English).
 
 ## 🎯 Features
 
