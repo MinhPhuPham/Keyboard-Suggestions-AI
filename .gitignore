@@ -34,3 +34,6 @@ models/mobile/
 
 # User data
 data/user_preferences.json
+
+/ios/JapaneseKeyboardAI
+/ios/JapaneseKeyboardAI-ML
